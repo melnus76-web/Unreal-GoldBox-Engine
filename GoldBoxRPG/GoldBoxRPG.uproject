@@ -14,10 +14,6 @@
 		{
 			"Name": "GeometryScripting",
 			"Enabled": true
-		},
-		{
-			"Name": "Aura",
-			"Enabled": true
 		}
 	]
 }
