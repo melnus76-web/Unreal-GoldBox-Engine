@@ -46,8 +46,10 @@
 | CheckStoryFlag | FlagName (String) | Value (Boolean) | Reads StoryFlags map |
 | LoadDungeonLevel | LevelID (Integer) | — | Loads dungeon, sets state to Exploration |
 | StartCombat | — | — | Calls BP_CombatManager.StartCombat — wired in GB-033 |
+  | EndCombat | Victory (Boolean) | — | Delegates to BP_CombatManager.EndCombat |
+  | AwardXP | Amount (Integer) | — | Delegates to BP_XPManager.AwardCombatXP + DistributeXP |
 
-> Note: EndCombat and AwardXP do NOT exist as functions on BP_GameManager — they were originally planned here but implemented instead as BP_CombatManager.EndCombat and BP_XPManager.AwardCombatXP/DistributeXP (GB-041), which is the correct ownership (combat-specific logic belongs on the combat manager, not the global game instance).
+> Note: EndCombat and AwardXP were originally implemented on BP_CombatManager/BP_XPManager. Later GB-003 tasks added `EndCombat(Victory)` and `AwardXP(Amount)` directly on BP_GameManager as convenience wrappers — they delegate to CombatManager/XPManager internally.
 
 ### Event Init Flow
 ```
@@ -1489,14 +1491,29 @@ Event BeginPlay
 
 ---
 
-## Planned Library Additions (not yet built)
+## Phase 1-3 Refactor: ForEach to FindByID (Complete)
 
-Identified during code review as candidates for extraction — duplicated logic patterns found in multiple Blueprints. Build these when next touching the relevant area, or as a dedicated refactor pass before Phase 6.
+All ForEach-loop-for-ID-match patterns across BP_CombatManager have been replaced with dedicated lookup functions:
 
-### New function on BP_CombatManager — FindCombatantByID
-**Inputs:** CombatantID (Integer)
-**Outputs:** Combatant (SCombatant), bFound (Boolean)
-```
+**FindCombatantByID** (Built)
+Inputs: CombatantID (Integer)
+Outputs: OutCombatant (SCombatant), OutIndex (Integer), bFound (Boolean)
+Location: BP_CombatManager function
+
+Replaces ForEach-Combatants-Break-Compare patterns in: ExecutePlayerAttack, ApplyDamage, ApplyCondition, RemoveCondition, HasCondition, UpdateCombatantGridPosition, ExecuteCombatantMove, EnterMoveMode, EndPlayerTurn, CheckVictory, CheckDefeat, FindStartCombatant, FindActiveCombatant, OnActionComplete, StartPlayerTurn, StartEnemyTurn.
+
+**FindMarkerByID** (Built)
+Inputs: CombatantID (Integer)
+Outputs: OutMarker (BP_CombatantMarker ref), bFound (Boolean)
+Location: BP_CombatManager function
+
+ForEach over SpawnedMarkers, Cast to BP_CombatantMarker, Compare CombatantID, return marker + bFound. Replaces ForEach-SpawnedMarkers-Cast-Compare patterns in: RemoveMarkerForCombatant, MoveMarkerToTile, SetMarkerDowned.
+
+Note: Flow diagrams below for MoveMarkerToTile, ApplyDamage, ApplyCondition, RemoveCondition, HasCondition, SetMarkerDowned, RemoveMarkerForCombatant, UpdateCombatantGridPosition, EnterMoveMode, ExecuteCombatantMove, CheckVictory, CheckDefeat, OnActionComplete, ExecutePlayerAttack still show the old ForEach patterns. In the current code, all of these call FindCombatantByID or FindMarkerByID instead. The logic is identical; the diagrams are just structurally outdated.
+
+ — duplicated logic patterns found in multiple Blueprints. Build these when next touching the relevant area, or as a dedicated refactor pass before Phase 6.
+
+
 FindCombatantByID(CombatantID)
   → For Each Combatants
        → Break SCombatant → CombatantID
@@ -1504,7 +1521,7 @@ FindCombatantByID(CombatantID)
             True → Return Element, bFound=true
   → Completed (no match) → Return default SCombatant, bFound=false
 ```
-Replaces the "loop Combatants, break out CombatantID, compare" pattern duplicated across `ApplyDamage`, `UpdateCombatantGridPosition`, attacker/defender lookups in `ExecutePlayerAttack`/`ExecuteEnemyAttack`, and similar lookups anywhere a single combatant needs to be found by ID rather than all combatants needing modification.
+DELETED_ORPHANED, break out CombatantID, compare" pattern duplicated across `ApplyDamage`, `UpdateCombatantGridPosition`, attacker/defender lookups in `ExecutePlayerAttack`/`ExecuteEnemyAttack`, and similar lookups anywhere a single combatant needs to be found by ID rather than all combatants needing modification.
 
 ### New library: BPL_GridMathLibrary (separate from BPL_RulesLibrary — spatial math, not AD&D rules)
 | Function | Pure | Inputs | Outputs | Replaces |
@@ -1698,14 +1715,14 @@ No more natural-20/natural-1 special-casing — the `Clamp(5, 95)` does that job
 | ECondition | Display | Color |
 |---|---|---|
 | Normal | _(blank)_ | Transparent |
-| Held | HLD | Purple (0.7, 0.4, 0.9) |
+| Restrained | RST | Purple (0.7, 0.4, 0.9) |
 | Paralysed | PAR | Purple (0.7, 0.4, 0.9) |
 | Poisoned | PSN | Acid green (0.6, 0.9, 0.1) |
 | Blinded | BLD | Amber (0.8, 0.6, 0.1) |
-| Hasted | HST | Cyan (0.1, 0.9, 0.9) |
+| Quickened | QCK | Cyan (0.1, 0.9, 0.9) |
 | Slowed | SLW | Muted blue (0.5, 0.5, 0.7) |
 | Diseased | DIS | Dark red (0.4, 0.1, 0.1) |
-| LevelDrained | LVD | Dark red (0.4, 0.1, 0.1) |
+| Sapped | SAP | Dark red (0.4, 0.1, 0.1) |
 | Petrified | STN | Dark red (0.4, 0.1, 0.1) |
 | Unconscious | UNC | Dark red (0.4, 0.1, 0.1) |
 | Dead | DED | Dark red (0.4, 0.1, 0.1) |

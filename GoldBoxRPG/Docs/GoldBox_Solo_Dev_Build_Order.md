@@ -1,4 +1,4 @@
-# Gold Box UE5.6 — Solo Dev Build Order
+# Gold Box UE5.7 — Solo Dev Build Order
 ## Optimised for Earliest Playable Vertical Slice
 
 ---
@@ -38,7 +38,7 @@ Tickets marked **[DEFER]** are not needed until after Milestone 1.
 
 | Order | Ticket | Notes |
 |---|---|---|
-| 8 | **GB-018** ⚠ partial | BP_CharacterRules — ComputeTHAC0, ComputeAC, GetStrengthBonus, ComputeSavingThrows, as originally built. Populate DT_LevelProgression and DT_SavingThrows data tables now — you will need them in combat. **GB-079 update: GetStrengthBonus/ComputeAC deleted and replaced. ComputeSavingThrows still legacy — see GB-079 row below for current status.** |
+| 8 | **GB-018** ⚠ partial | BP_CharacterRules — ComputeTHAC0, ComputeAC, GetStrengthBonus, ComputeSavingThrows, as originally built. Populate DT_LevelProgression and DT_SavingThrows data tables now — you will need them in combat. **GB-079 update: GetStrengthBonus/ComputeAC deleted and replaced. ComputeSavingThrows migrated to BPL_RulesLibrary (3-category formula: Fortitude/Reflex/Willpower) — see GB-079 row below for current status.** |
 | 9 | **GB-020** | BP_PartyManager — AddCharacter, GetLivingMembers, IsPartyWiped. Do NOT build character creation yet |
 | 10 | **GB-020a** | [STUB] Hardcode a test party of 4 in BP_GameManager BeginPlay: one Fighter, one Cleric, one Magic-User, one Thief. Fill all SCharacter fields manually. This replaces GB-019 for the VS |
 
@@ -131,6 +131,16 @@ Tickets marked **[DEFER]** are not needed until after Milestone 1.
 
 **Test checkpoint:** Full VS loop works end to end. Walk dungeon → encounter trigger → choose Attack → combat starts → move and attack → enemy attacks back → one side dies → XP awarded → return to dungeon → reach exit tile.
 
+### Phase 4g — Blueprint Refactor (ForEach to FindByID) ✅
+
+**All ForEach-loop-by-ID patterns in BP_CombatManager replaced with FindCombatantByID and FindMarkerByID.**
+
+15 caller functions refactored: ExecutePlayerAttack (rewritten from scratch), ApplyDamage, ApplyCondition, RemoveCondition, HasCondition, UpdateCombatantGridPosition, ExecuteCombatantMove, EnterMoveMode, EndPlayerTurn, CheckVictory, CheckDefeat, FindStartCombatant, FindActiveCombatant, OnActionComplete, StartPlayerTurn, StartEnemyTurn.
+
+3 marker functions refactored to use FindMarkerByID: RemoveMarkerForCombatant, MoveMarkerToTile, SetMarkerDowned.
+
+Bugs fixed: miss messages reconnected, 240 damage display bug, FindStartCombatant missing CurrentCombatantID.
+
 ---
 
 ## Phase 5 — Vertical Slice Complete
@@ -143,7 +153,7 @@ Tickets marked **[DEFER]** are not needed until after Milestone 1.
 - [ ] Read tile-triggered dungeon messages
 - [ ] Trigger a scripted encounter (dialogue choice)
 - [ ] Enter tactical combat on a grid
-- [ ] Execute attack actions, resolve THAC0, apply damage *(legacy math, as actually built — migrates under GB-079 in Phase 6)*
+- [ ] Execute attack actions, resolve percentage-based hit chance, apply damage *(Threshold System — migrated under GB-079)*
 - [ ] Defeat all enemies
 - [ ] Award XP, check level-up
 - [ ] Return to exploration

@@ -76,7 +76,7 @@ A Gold Box-inspired RPG built in **Unreal Engine 5.7**, Blueprints only. Tactica
 
 ### Phase 4e — Combat HUD and XP (EPIC 008/EPIC 004)
 - ✅ **GB-004a** — WBP_CombatHUD stub complete. Bottom action bar (Move/Attack/EndTurn/Flee buttons, round counter and turn indicator placeholders) shown/hidden directly by BP_CombatManager via CombatHUDRef — OnGameStateUpdated binding does not work for widgets not yet in viewport, so direct manager-driven show/hide is used instead (same pattern as WBP_EncounterScreen).
-- ✅ **GB-041** ⚠ partial — BP_XPManager complete (VS scope), as originally built. **GB-079 update:** GetConstitutionHPBonus replaced by GetVigorBonus, THAC0 field references replaced by StrikeNumber throughout the level-up flow. XPRequired column in DT_LevelProgression is still legacy — not yet migrated to a formula. Original verification: goblin defeat (XPValue=20) splits 5 XP to each of 4 party members; forced high-XP test confirmed all four characters correctly leveled up.
+- ✅ **GB-041** — BP_XPManager complete. **GB-079:** GetConstitutionHPBonus replaced by GetVigorBonus, THAC0 references replaced by StrikeNumber. XP thresholds now use formula-based `GetXPThreshold(Class, Level)` — BP_XPManager complete (VS scope), as originally built. **GB-079 update:** GetConstitutionHPBonus replaced by GetVigorBonus, THAC0 field references replaced by StrikeNumber throughout the level-up flow. XPRequired column in DT_LevelProgression is still legacy — not yet migrated to a formula. Original verification: goblin defeat (XPValue=20) splits 5 XP to each of 4 party members; forced high-XP test confirmed all four characters correctly leveled up.
 
 ---
 
@@ -112,7 +112,7 @@ A Gold Box-inspired RPG built in **Unreal Engine 5.7**, Blueprints only. Tactica
 
 ---
 
-### GB-079 — Ruleset Migration to The Threshold System (in progress)
+### GB-079 — Ruleset Migration to The Threshold System (Complete)
 - ✅ **Ability scores migrated.** `SCharacter` renamed Strength→Might, Intelligence→Acuity, Wisdom→Resolve, Dexterity→Reflex, Constitution→Vigor, Charisma→Presence. `StrengthExceptional` deleted entirely. Verified via `DT_TestParty` — all four characters' data carried through the rename cleanly, no loss.
 - ✅ **GetMightBonus and GetVigorBonus built** on `BPL_RulesLibrary`, replacing `GetStrengthBonus`/`GetConstitutionHPBonus` (deleted, not kept as wrappers). New breakpoints, no exceptional-score tier. `GetVigorBonus` wired into `BP_XPManager.CheckLevelUp`'s HP roll, tested via level-up.
 - ✅ **Combat math fully rebuilt.** `AC`→`DefenseRating`, `THAC0`→`StrikeNumber` renamed on `SCharacter`, `SCombatant`, `SMonster`, and the `SLevelProgression` column. **Design correction caught before implementation:** the original ruleset doc specified `Required Roll = Strike Number − Defense Rating` on a d20 — this was backwards (ascending Defense Rating would make better-armored targets easier to hit). Decided to switch to a percentage-based system entirely rather than just fix the operator, since a d20's 20-point range was too tight to calibrate against future bonus stacking (gear, spells, conditions). New formula: `Final Hit Chance = clamp(StrikeNumber + MightBonus + WeaponBonus + SituationalModifier − DefenseRating, 5, 95)`, roll 1d100, hit if roll ≤ Final Hit Chance. Natural-20/natural-1 special-casing removed — the clamp does that job now.
@@ -349,12 +349,12 @@ This is the correct pattern for any widget that:
 |---|---|---|
 | EGameState | MainMenu, Exploration, Encounter, Combat, Camp, CharacterScreen | |
 | EDirection | North, East, South, West | |
-| ECharacterClass | Fighter, Ranger, Paladin, Cleric, Druid, MagicUser, Illusionist, Thief, Assassin | |
+| ECharacterClass | Warden, Skirmisher, Templar, Devout, Sylvan, Adept, Shadowpriest, Rogue, Infiltrator | Renamed GB-079 |
 | ERace | Human, Elf, Dwarf, Gnome, HalfElf, Halfling, HalfOrc | |
 | EAlignment | LawfulGood through ChaoticEvil (9 values) | |
 | ECombatAction | Move, Attack, Cast, UseItem, Guard, Flee | |
 | ECombatAction_AI | MoveToTarget, AttackNearest, AttackIncapacitated, CastSpell, Flee | |
-| ECondition | Normal, Held, Paralysed, Poisoned, Blinded, Hasted, Slowed, Diseased, LevelDrained, Petrified, Dead, Unconscious | |
+| ECondition | Normal, Restrained, Paralysed, Poisoned, Blinded, Quickened, Slowed, Diseased, Sapped, Petrified, Dead, Unconscious | Renamed GB-079 |
 | ESpellSchool | MagicUser, Illusionist, Cleric, Druid | |
 | ESpellEffect | Damage, Heal, AoEDamage, Entangle, Hold, Haste, Slow, Blind, LevelDrain, Summon, Utility | |
 | ETriggerType | OnEnterTile, OnSearchTile, OnStoryFlag, OnTimedCondition, OnCombatEnd, OnItemUsed, OnDayNight, OnMoonPhase | |
@@ -362,7 +362,7 @@ This is the correct pattern for any widget that:
 | EMessageType | Exploration, Combat, System, Loot, Encounter | |
 | EOutcomeType | Combat, Reward, Flee, TextOnly | |
 | ETileType | Floor, Pit, Water, Teleport, StairsUp, StairsDown | |
-| ESaveType | VsPoison, VsWands, VsPetrification, VsBreathWeapon, VsSpells | |
+| ESaveType | Fortitude, Reflex, Willpower | Restructured GB-079 (5 to 3 categories) |
 | ETestType | Float, Integer, Bool | |
 
 ---
@@ -406,7 +406,16 @@ Phase 4e: GB-004a ✅ (Combat HUD stub), GB-041 ✅ (XP Manager)
 Phase 4f: GB-039 ✅ (Dead + Restrained conditions — VS subset)
 ```
 
-**New ticket needed:** live HP sync during combat (all hits, not just death). `ApplyDamage` currently updates `SCombatant` only — `SCharacter` in `BP_PartyManager` doesn't reflect HP changes until combat ends. Party panel shows stale HP for living characters taking damage mid-combat. Consider adding as **GB-039a** or a new Phase 4 ticket before VS is considered done.
+**New ticket needed:** live HP sync during combat (all hits, not just death)
+
+  ### Phase 1-3 Refactor (Complete)
+
+  All ForEach-loop-by-ID patterns in BP_CombatManager replaced with FindCombatantByID and FindMarkerByID:
+  - 15 caller functions refactored to use FindCombatantByID(CombatantID) to OutCombatant + bFound
+  - ExecutePlayerAttack rewritten from scratch: cleaner graph, ForEach loops removed, 240 damage display bug fixed
+  - 3 marker functions (RemoveMarkerForCombatant, MoveMarkerToTile, SetMarkerDowned) refactored to use FindMarkerByID
+  - Miss messages reconnected in ExecutePlayerAttack
+  - FindStartCombatant missing CurrentCombatantID assignment fixed. `ApplyDamage` currently updates `SCombatant` only — `SCharacter` in `BP_PartyManager` doesn't reflect HP changes until combat ends. Party panel shows stale HP for living characters taking damage mid-combat. Consider adding as **GB-039a** or a new Phase 4 ticket before VS is considered done.
 
 ### Deferred Polish Items (post-VS)
 - CommandMenu visibility during Encounter state
@@ -418,10 +427,10 @@ Phase 4f: GB-039 ✅ (Dead + Restrained conditions — VS subset)
 - Movement range rules system redesign (currently hardcoded to 3 for VS testing)
 - Adjacency check for attacks (currently can attack from any distance)
 - Diagonal movement consideration (Chebyshev allows 8-directional)
-- **GB-079 — Ruleset migration to The Threshold System** (Phase 6, before commercial release): replaces THAC0/AC math, GetStrengthBonus/GetConstitutionHPBonus tables, DT_LevelProgression and DT_SavingThrows tables, and renames ECharacterClass/ECondition/ESpellSchool values. See `Threshold_Ruleset_v1.md` §11 for the full mapping.
+- **GB-079 already complete — only ESpellSchool 4-to-2 shrink deferred (magic system not built yet).** (Phase 6, before commercial release): replaces THAC0/AC math, GetStrengthBonus/GetConstitutionHPBonus tables, DT_LevelProgression and DT_SavingThrows tables, and renames ECharacterClass/ECondition/ESpellSchool values. See `Threshold_Ruleset_v1.md` §11 for the full mapping.
 
 ---
 
-*Document updated: GB-039 Minimum Conditions (VS subset) complete — Dead and Restrained mechanics fully working, party panel syncs on player death, OnMessagePosted_Event loop bug fixed. Phase 4 complete. New ticket needed for live HP sync during combat.*
-*Next: live HP sync ticket (GB-039a), or move to Phase 5/6 tickets (GB-037/038/040/044).*
+*Document updated: GB-079 ruleset migration complete. Phase 1-3 refactor complete (ForEach to FindByID on BP_CombatManager). Phase 4 combat loop verified end-to-end.*
+*Next: Phase 5/6 tickets (GB-037/038/040/044) or live HP sync (GB-039a).*
 *UE5.7 · Blueprints Only · Solo Dev*

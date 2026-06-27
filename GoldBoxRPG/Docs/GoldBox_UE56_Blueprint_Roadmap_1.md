@@ -1,5 +1,5 @@
 # Gold Box Inspired RPG Engine
-## Unreal Engine 5.6.4 Blueprint Development Plan
+## Unreal Engine 5.7 Blueprint Development Plan
 
 ---
 
@@ -7,7 +7,7 @@
 
 Create a modern Gold Box-inspired RPG using:
 
-- Unreal Engine 5.6.4
+- Unreal Engine 5.7
 - Blueprints only
 - First-person dungeon exploration (tile-based, discrete movement)
 - Tactical top-down grid combat
@@ -21,7 +21,7 @@ Create a modern Gold Box-inspired RPG using:
 
 This project originally prototyped its rules using AD&D-derived placeholder math (THAC0, descending AC, five-category saves, doubling XP tables) to get the vertical slice working quickly. That placeholder math has since been replaced in design by **The Threshold System** — a wholly original ruleset (see `Threshold_Ruleset_v1.md`) designed specifically to avoid reproducing any published rulebook's tables or terminology, since the long-term goal is a sellable commercial product.
 
-**Migration status:** The Vertical Slice (Milestone 1) was built and tested end-to-end using the original placeholder math — that work is correct and complete, just running on rules that need replacing before any commercial release. All **new** rules work from Phase 6 onward targets The Threshold System directly. The already-built legacy systems (attack resolution, ability score bonus tables, XP/level progression) are tracked for migration under **GB-079** (see EPIC 009).
+**Migration status:** The Vertical Slice (Milestone 1) was built and tested end-to-end. **GB-079 is now essentially complete** — the entire combat math, ability scores, XP thresholds, saving throws, and class/condition enums have all been migrated to The Threshold System and tested. Only ESpellSchool's 4-to-2 shrink remains, just running on rules that need replacing before any commercial release. All **new** rules work from Phase 6 onward targets The Threshold System directly. The already-built legacy systems (attack resolution, ability score bonus tables, XP/level progression) are tracked for migration under **GB-079** (see EPIC 009).
 
 Tickets below are marked accordingly: ✅ = built (legacy math, working), no mark = not yet built (descriptions already updated to target The Threshold System).
 
@@ -39,7 +39,7 @@ A successful vertical slice allows the player to:
 6. Read tile-triggered dungeon messages
 7. Trigger a scripted encounter (dialogue choice)
 8. Enter tactical combat on a grid
-9. Execute attack actions, resolve Strike Number vs Defense Rating (built under legacy THAC0/AC math — see Ruleset Notice), apply damage
+9. Execute attack actions, resolve percentage-based hit chance (Threshold System — see Ruleset Notice), apply damage
 10. Defeat all enemies
 11. Award XP, return to exploration
 12. Reach dungeon exit
@@ -51,7 +51,7 @@ Everything else comes later.
 # EPIC 001 — Project Foundation
 
 ## GB-001 Create Unreal project structure
-- Create UE 5.6.4 Blueprint-only project
+- Create UE 5.7 Blueprint-only project
 - Create folder structure: Blueprints, Data, UI, Maps, Audio, Art
 - Configure source control (Git or Perforce)
 - Create naming conventions document (BP_, DT_, WBP_, E_, S_ prefixes)
