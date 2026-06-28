@@ -428,7 +428,7 @@ Everything else comes later.
   - Class bonus (+2 to one save): Warden→Fortitude, Devout→Willpower, Adept→Willpower, Rogue→Reflex
 - No DT_SavingThrows table needed — formula-driven, see Threshold_Ruleset_v1.md §5
 
-## GB-039 Create Condition / Status Effect System — *(VS subset ✅ complete; full system post-VS)*
+## GB-039 Create Condition / Status Effect System — *(8/12 complete ✅; 3 deferred post-VS; multi-monster spawning + initiative fix done)*
 - **VS subset built:** `ApplyCondition`, `RemoveCondition`, `HasCondition`, `SetMarkerDowned` as shared functions on `BP_CombatManager` (not a separate `BP_ConditionManager` actor — consistent with `ApplyDamage` pattern, instance-state functions rather than pure library functions). Dead and Restrained fully wired into both attack paths and turn order. See `GoldBox_Project_Progress_Summary_1.md` Phase 4f for full detail.
 - **Also built as part of VS:** `ApplyDeathToCharacter` on `BP_PartyManager` (party panel sync on death), `CheckDefeat` stub on `BP_CombatManager` (ends combat when all party members Dead — replace with proper game-over in GB-046). `SCharacter.Conditions` changed from single `ECondition` to `Array of ECondition`.
 - **Full system (post-VS):**
