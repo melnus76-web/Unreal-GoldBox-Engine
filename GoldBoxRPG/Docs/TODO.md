@@ -30,7 +30,7 @@
 | Multi-condition display | GB-039 | Party panel only checks `Contains(Dead)`. Needs multi-icon or scrolling condition display |
 | Downed marker visual polish | GB-039 | Currently 0.5 scale only â€” needs material tint, icon, or animation |
 | Monster AI multi-attack | GB-037 | `GetAttacksThisRound` works for player but `ExecuteEnemyAttack` doesn't use it yet. Current monsters all have `NumAttacks=1` (harmless) |
-| Adjacency check for attacks | GB-042 | Can currently attack from any distance. Need range check before allowing attack |
+| Adjacency check for attacks | GB-042 | Complete. S_Monster/S_Combatant.AttackRange fields, GetCombatDistance in BPL_RulesLibrary, range gate in ExecutePlayerAttack and ExecuteEnemyAttack. Monsters default melee (range=1), players hardcoded range=1 until weapon tables exist |
 | Movement range redesign | GB-042 | Currently hardcoded to 3 for VS. Needs rules-based system (class/race/armour-based) |
 | Attack range / diagonal movement | GB-042 | Chebyshev allows 8-directional movement. Consider whether diagonal should cost extra |
 

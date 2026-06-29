@@ -999,7 +999,17 @@ BuildCombatants(SourceMonster)
        → Combatants ADD party combatant
 ```
 
-### GB-033/034 Notes
+### BuildCombatants Attack Wiring *(GB-042)*
+  ```
+  BuildCombatants(SourceMonster, MonsterCount)
+    -> [Monster ForLoop]
+         -> Break S_Monster -> AttackRange -> S_Combatant.AttackRange (on MakeStruct)
+         -> MovementRate -> MovementRange (existing)
+    -> [Player ForEachLoop]
+         -> MakeStruct S_Combatant: AttackRange=1 (hardcoded, same as MovementRange=6)
+  ```
+
+  ### GB-033/034 Notes
 - MonsterGroupID maps directly to DT_Monsters row for VS — full MonsterGroup table lookup comes post-VS
 - Party CombatantIDs start at 1000 to avoid collision with monster IDs
 - CombatGridRef and CombatCameraRef set from Level Blueprint after SpawnManagers completes
@@ -1176,6 +1186,19 @@ CheckDefeat (called from OnActionComplete before turn dispatch)
   → Branch: bAllPartyDead?
        True → PostMessage("Defeat — all party members have fallen.", Combat) → EndCombat
             ⚠ STUB — EndCombat used as placeholder. Replace with proper game-over/defeat screen in GB-046
+  ```
+
+  #### ExecutePlayerAttack Range Gate *(GB-042)*
+  ```
+  ExecutePlayerAttack(TargetCombatantID)
+    -> [attacker/defender lookup -- unchanged]
+    -> Break AttackerCombatant -> GridPosition, AttackRange
+    -> Break DefenderCombatant -> GridPosition
+    -> GetCombatDistance -> Distance
+    -> Branch: Distance <= AttackRange?
+         True -> [existing HasCondition / ResolveAttack flow]
+         False -> PostMessage("[name] is out of range", Combat) -> OnActionComplete
+  ```
        False → continue into normal turn dispatch
 ```
 
@@ -1567,7 +1590,8 @@ All functions are globally accessible. Most are Pure except dice-rolling functio
 | GetVigorBonus | ✅ | Vigor (int) | HPBonus (int) | **GB-079 — replaces GetConstitutionHPBonus.** Chained Branch table, max +4 not +3. See table below |
 | GetAbilityModifier | ✅ | Score (int) | Modifier (int) | **GB-079 — built.** Generic small-bonus table, same shape as GetMightBonus's ToHit column. Reused by ComputeSavingThrows for whichever ability score is relevant per save |
 | ComputeSavingThrows | ✅ | Class (ECharacterClass), Level (int), Vigor, Reflex, Resolve (int) | FortitudeSave, ReflexSave, WillpowerSave (int) | **GB-079 — fully migrated, and relocated.** Was found living in BP_CharacterRules rather than BPL_RulesLibrary (second occurrence of this doc/reality mismatch, after GetStrengthBonus — worth a full audit of BP_CharacterRules's actual remaining contents). Deleted from BP_CharacterRules, rebuilt here. Formula: `16 − floor(Level/2) − GetAbilityModifier(relevant score) − ClassBonus`. Class bonus +2 to one save via three separate Select nodes keyed on Class: Fighter→Fortitude, Cleric→Willpower, MagicUser→Willpower, Thief→Reflex. Not yet called from any gameplay trigger — ready for GB-038 |
-| RollDice | ❌ | NumDice (int), DieType (int) | Total (int) | For Loop — supports multi-dice rolls (2d6 etc) |
+| GetCombatDistance | yes | GridPositionA (FVector2D), GridPositionB (FVector2D) | Distance (int) | **GB-042 -- built.** Chebyshev distance: Max(Abs(dx), Abs(dy)). Used by ExecutePlayerAttack and ExecuteEnemyAttack for range gating |
+  | RollDice | ❌ | NumDice (int), DieType (int) | Total (int) | For Loop — supports multi-dice rolls (2d6 etc) |
 | DiceRollWithModifier | ❌ | NumDice (int), DieType (int), Modifier (int) | Total (int) | RollDice + Modifier |
 | PercentileRoll | ❌ | — | Result (int) | 1–100. Originally built for Rogue skill checks — now also the core die roll for ResolveAttack |
 | ResolveAttack | ✅ | Attacker (SCombatant), Defender (SCombatant) | AttackResult (SAttackResult) | **GB-079 — fully migrated.** Percentage-based resolution — see below |
@@ -1650,7 +1674,17 @@ No more natural-20/natural-1 special-casing — the `Clamp(5, 95)` does that job
 | RollNeeded | Integer | ✅ GB-079: now Final Hit Chance, a percentage (was a d20 target number) — field name kept as-is, meaning changed |
 | Damage | Integer | Damage dealt (0 if miss) |
 
-### S_MonsterPortrait
+### S_Monster *(added AttackRange -- GB-042)*
+  | Field | Type | Notes |
+  |---|---|---|
+  | AttackRange | Integer | **GB-042 -- added.** Default 1 (melee). Copied to S_Combatant during BuildCombatants. Set per-monster in DT_Monsters |
+
+  ### S_Combatant *(added AttackRange -- GB-042)*
+  | Field | Type | Notes |
+  |---|---|---|
+  | AttackRange | Integer | **GB-042 -- added.** Set during BuildCombatants: monsters from S_Monster.AttackRange, players hardcoded 1 (melee until weapon tables exist). Checked against GetCombatDistance in attack functions |
+
+  ### S_MonsterPortrait
 | Field | Type | Notes |
 |---|---|---|
 | MonsterID | Integer | Matches SMonster.MonsterID |
