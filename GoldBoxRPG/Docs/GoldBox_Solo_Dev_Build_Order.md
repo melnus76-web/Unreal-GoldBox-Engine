@@ -51,7 +51,7 @@ Tickets marked **[DEFER]** are not needed until after Milestone 1.
 
 | Order | Ticket | Notes |
 |---|---|---|
-| 11 | **GB-007** | SDungeonTile and SDungeonMap structs. Also create DT_DungeonMaps and hand-author one small test level (8×8, a few corridors, one message tile, one exit tile, one encounter trigger tile) |
+| 11 | **GB-007** | SDungeonTile and SDungeonMap structs. Also create DT_DungeonMaps and hand-author one small test level (8x8, a few corridors, one message tile, one exit tile, one encounter trigger tile) |
 | 12 | **GB-008** | BP_MapManager — LoadMap, GetTile, CheckWall, UpdatePlayerPosition, GetExitTile. Leave IncrementStepCounter as a stub (just increments, no encounter check yet) |
 | 13 | **GB-005** | BP_ExplorerPawn — camera, grid coords, facing direction |
 | 14 | **GB-006** | Movement system — MoveForward, MoveBackward, TurnLeft, TurnRight with timeline-based smooth movement and wall collision check |
@@ -78,7 +78,7 @@ Tickets marked **[DEFER]** are not needed until after Milestone 1.
 | 25 | **GB-029** | WBP_EncounterScreen — portrait area, text area, dynamic choice buttons. Wire to BP_EncounterManager |
 | 26 | **GB-016** | WBP_EncounterPortrait — [STUB] just show a placeholder texture for now. Real portraits come with art pass |
 
-**Test checkpoint:** Walk to encounter tile → screen transitions → read text → click Attack → encounter manager calls StartCombat (which doesn't exist yet, so just print "Combat would start here").
+**Test checkpoint:** Walk to encounter tile -> screen transitions -> read text -> click Attack -> encounter manager calls StartCombat (which doesn't exist yet, so just print "Combat would start here").
 
 ---
 
@@ -98,38 +98,38 @@ Tickets marked **[DEFER]** are not needed until after Milestone 1.
 | Order | Ticket | Notes |
 |---|---|---|
 | 29 | **GB-022** ✅ | DT_Monsters — 5 monsters seeded: Goblin (ID=1), Orc (ID=2), Skeleton (ID=3, IsUndead), Zombie (ID=4, IsUndead), Giant Rat (ID=5, HasPoison, HitDice=0.5 for sweep attack testing). SMonster struct fixed: MoraleRating + XPValue changed from Boolean to Integer |
-| 30 | **GB-033** ✅ | BP_CombatManager — StartCombat wired end to end. Spawned by BP_GameManager. CombatGridRef + CombatCameraRef set from Level Blueprint. Party CombatantIDs start at 100. CompleteMovement in BP_ExplorerPawn now updates GameManager CurrentPlayerTileX/Y. C key test trigger removed — StartCombat owns camera switch. Full flow verified: encounter → Attack! → combat camera → corridor arena → movement locked |
+| 30 | **GB-033** ✅ | BP_CombatManager — StartCombat wired end to end. Spawned by BP_GameManager. CombatGridRef + CombatCameraRef set from Level Blueprint. Party CombatantIDs start at 100. CompleteMovement in BP_ExplorerPawn now updates GameManager CurrentPlayerTileX/Y. C key test trigger removed — StartCombat owns camera switch. Full flow verified: encounter -> Attack! -> combat camera -> corridor arena -> movement locked |
 | 31 | **GB-034** ✅ | BP_CombatTurnManager — StartPlayerTurn, StartEnemyTurn, OnActionComplete, round counter |
 
 ### Phase 4c — Attack Resolution
 
 | Order | Ticket | Notes |
 |---|---|---|
-| 32 | **GB-036** ✅ → ✅ migrated under GB-079 | ResolveAttack added to BPL_RulesLibrary, originally built with THAC0−AC d20 math. **Fully rebuilt during GB-079 as a percentage-based roll — see GB-079 row below for details.** |
+| 32 | **GB-036** ✅ -> ✅ migrated under GB-079 | ResolveAttack added to BPL_RulesLibrary, originally built with THAC0-AC d20 math. **Fully rebuilt during GB-079 as a percentage-based roll — see GB-079 row below for details.** |
 | 33 | **GB-043** ✅ | WBP_AttackAction — target selection highlight, call ResolveAttack, apply damage, death check, log result to TextLog |
-| 34 | **GB-042** ✅ | Move Action (VS scope — on BP_CombatManager not WBP): M key → EnterMoveMode → WASD moves combatant one tile. BP_TileHighlight actor for cyan tile highlights. GetValidMoveTiles filters traversable+unoccupied. TilesMovedThisTurn tracking (resets each turn). EndPlayerTurn (T key). RefreshMoveHighlights after each move. Return Node fix in OnActionComplete resolved duplicate turn message. MovementRange=3 for VS (rules redesign post-VS). |
+| 34 | **GB-042** ✅ | Move Action (VS scope — on BP_CombatManager not WBP): M key -> EnterMoveMode -> WASD moves combatant one tile. BP_TileHighlight actor for cyan tile highlights. GetValidMoveTiles filters traversable+unoccupied. TilesMovedThisTurn tracking (resets each turn). EndPlayerTurn (T key). RefreshMoveHighlights after each move. Return Node fix in OnActionComplete resolved duplicate turn message. MovementRange=3 for VS (rules redesign post-VS). |
 
 ### Phase 4d — Enemy AI (Minimum Viable)
 
 | Order | Ticket | Notes |
 |---|---|---|
-| 35 | **GB-045** ✅ | BP_EnemyAI — VS stub complete. Spawned by BP_GameManager, CombatManagerRef set by StartEnemyTurn. FindNearestPartyMember (Chebyshev distance, skips monsters + dead), MoveOneStepToward (GetAdjacentTiles → IsTraversable + IsOccupied filter → closest tile), ExecuteEnemyAttack (ResolveAttack → ApplyDamage → CheckVictory). Shared functions added to BP_CombatManager: UpdateCombatantGridPosition, MoveMarkerToTile, ApplyDamage. Verified: goblin moves one tile per turn, respects traversability and occupancy, attacks nearest party member, combat continues and ends correctly. Full priority logic (incapacitated targets, AoE opportunity, morale flee) comes post-VS. |
+| 35 | **GB-045** ✅ | BP_EnemyAI — VS stub complete. Spawned by BP_GameManager, CombatManagerRef set by StartEnemyTurn. FindNearestPartyMember (Chebyshev distance, skips monsters + dead), MoveOneStepToward (GetAdjacentTiles -> IsTraversable + IsOccupied filter -> closest tile), ExecuteEnemyAttack (ResolveAttack -> ApplyDamage -> CheckVictory). Shared functions added to BP_CombatManager: UpdateCombatantGridPosition, MoveMarkerToTile, ApplyDamage. Verified: goblin moves one tile per turn, respects traversability and occupancy, attacks nearest party member, combat continues and ends correctly. Full priority logic (incapacitated targets, AoE opportunity, morale flee) comes post-VS. |
 
 ### Phase 4e — Combat HUD, XP, and End State
 
 | Order | Ticket | Notes |
 |---|---|---|
 | 36 | **GB-004a** ✅ | WBP_CombatHUD — VS stub complete. Bottom action bar matching ExplorationHUD command menu position (full width, Y=-108, H=108). Buttons: Move (M), Attack (A), End Turn (T), Flee (stub). Round counter and turn indicator text placeholders (wiring deferred). Shown/hidden directly by BP_CombatManager.StartCombat/EndCombat via CombatHUDRef. Button clicks wire to BP_CombatManager functions. Verified: HUD appears on combat start, all buttons functional, HUD disappears on combat end. Note: OnGameStateUpdated binding pattern does NOT work for widgets not yet in viewport — use direct manager ref pattern instead (same as WBP_EncounterScreen). |
-| 37 | **GB-041** ✅ → ✅ fully migrated under GB-079 | BP_XPManager — AwardCombatXP, DistributeXP, CheckLevelUp, ApplyLevelUp, as originally built. **GB-079 update: Constitution/GetConstitutionHPBonus replaced by Vigor/GetVigorBonus, THAC0 references replaced by StrikeNumber throughout, XPRequired table lookup replaced by GetXPThreshold formula.** Original verification: goblin defeat awards 20 XP split 4 ways; forced high-XP test confirmed correct level-up for all four characters. New formula verified separately: 2500 XP per character correctly leveled all four to exactly level 2, not level 3. |
+| 37 | **GB-041** ✅ -> ✅ fully migrated under GB-079 | BP_XPManager — AwardCombatXP, DistributeXP, CheckLevelUp, ApplyLevelUp, as originally built. **GB-079 update: Constitution/GetConstitutionHPBonus replaced by Vigor/GetVigorBonus, THAC0 references replaced by StrikeNumber throughout, XPRequired table lookup replaced by GetXPThreshold formula.** Original verification: goblin defeat awards 20 XP split 4 ways; forced high-XP test confirmed correct level-up for all four characters. New formula verified separately: 2500 XP per character correctly leveled all four to exactly level 2, not level 3. |
 | 38 | **GB-046** ✅ (partial) | Combat victory/defeat handling — XP summary display, loot placeholder (just gold for now), return to exploration state. **Built for VS:** CheckVictory + EndCombat (victory detection, XP award via GB-041, camera/state cleanup, return to exploration). **Deferred:** defeat handling (all party dead), loot drop, retreat system |
 
 ### Phase 4f — Minimum Conditions
 
 | Order | Ticket | Notes |
 |---|---|---|
-| 39 | **GB-039** ✅ | BP_ConditionManager (VS subset) — implemented Dead and Restrained (renamed from Held under GB-079). **Built:** `ApplyCondition`, `RemoveCondition`, `HasCondition`, `SetMarkerDowned` as shared functions on `BP_CombatManager`. Dead applied on kill in both `ExecutePlayerAttack` and `ExecuteEnemyAttack`. `OnActionComplete` guard clause skips Dead and Restrained combatants (with critical ID-match gate fix — without it the For Each loop was dispatching start-turn logic for every combatant instead of just the matching one, causing rapid infinite recursion). `CheckDefeat` stub added to `OnActionComplete` (calls `EndCombat` when all party members have Dead — proper game-over handling deferred to GB-046). Restrained auto-hit wired into both attack paths with separate "(Auto Hit)" message path bypassing the roll-display message. `CharacterID` added to `SCombatant` struct; `SCharacter.Conditions` changed from single `ECondition` to `Array of ECondition`; `ApplyDeathToCharacter` built on `BP_PartyManager` (sets HP=0, adds Dead, fires `OnPartyUpdated`); erroneous `RefreshPartyPanel` call removed from `OnMessagePosted_Event` in `WBP_ExplorationHUD` (was causing infinite loop on all-party-dead). **Deferred:** live HP sync during combat (all hits, not just death — new ticket needed), full defeat/game-over screen (GB-046), multi-condition display in party panel, visual polish for downed markers. |
+| 39 | **GB-039** ✅ | Condition system — 8/12 complete. **Built:** Dead, Restrained, Poisoned, Blinded, Quickened, Slowed, Paralysed, Unconscious. Skip-turn OR-chain in `OnActionComplete` covers Dead/Restrained/Paralysed/Unconscious. Auto-hit OR-chain in both attack functions covers Restrained/Paralysed/Unconscious. Blinded penalty wired into `ResolveAttack` (attacker +4 SN, defender +4 DR) and `ResolveSave` (+4 Reflex). `GetMovementModifier` on `BPL_RulesLibrary` handles Quickened (+1)/Slowed (−1) for both movement (`EnterMoveMode`) and attacks (`GetAttacksThisRound`, with min-1 clamp for Slowed). `GetBlindPenalty` on `BPL_RulesLibrary` returns 4 if Blinded. **Deferred:** Diseased (game-time system needed), Sapped (level-down logic needed), Petrified (damage-type system needed). Live HP sync during combat, full defeat/game-over (GB-046), multi-condition display, and downed marker polish all still deferred. (renamed from Held under GB-079). **Built:** `ApplyCondition`, `RemoveCondition`, `HasCondition`, `SetMarkerDowned` as shared functions on `BP_CombatManager`. Dead applied on kill in both `ExecutePlayerAttack` and `ExecuteEnemyAttack`. `OnActionComplete` guard clause skips Dead and Restrained combatants (with critical ID-match gate fix — without it the For Each loop was dispatching start-turn logic for every combatant instead of just the matching one, causing rapid infinite recursion). `CheckDefeat` stub added to `OnActionComplete` (calls `EndCombat` when all party members have Dead — proper game-over handling deferred to GB-046). Restrained auto-hit wired into both attack paths with separate "(Auto Hit)" message path bypassing the roll-display message. `CharacterID` added to `SCombatant` struct; `SCharacter.Conditions` changed from single `ECondition` to `Array of ECondition`; `ApplyDeathToCharacter` built on `BP_PartyManager` (sets HP=0, adds Dead, fires `OnPartyUpdated`); erroneous `RefreshPartyPanel` call removed from `OnMessagePosted_Event` in `WBP_ExplorationHUD` (was causing infinite loop on all-party-dead). **Deferred:** live HP sync during combat (all hits, not just death — new ticket needed), full defeat/game-over screen (GB-046), multi-condition display in party panel, visual polish for downed markers. |
 
-**Test checkpoint:** Full VS loop works end to end. Walk dungeon → encounter trigger → choose Attack → combat starts → move and attack → enemy attacks back → one side dies → XP awarded → return to dungeon → reach exit tile.
+**Test checkpoint:** Full VS loop works end to end. Walk dungeon -> encounter trigger -> choose Attack -> combat starts -> move and attack -> enemy attacks back -> one side dies -> XP awarded -> return to dungeon -> reach exit tile.
 
 ### Phase 4g — Blueprint Refactor (ForEach to FindByID) ✅
 
@@ -149,7 +149,7 @@ Bugs fixed: miss messages reconnected, 240 damage display bug, FindStartCombatan
 - [ ] Start game
 - [ ] Load a dungeon level (hardcoded test party)
 - [ ] Move through dungeon tile-by-tile
-- [ ] Turn 90° left/right
+- [ ] Turn 90 left/right
 - [ ] Read tile-triggered dungeon messages
 - [ ] Trigger a scripted encounter (dialogue choice)
 - [ ] Enter tactical combat on a grid
@@ -168,12 +168,12 @@ Bugs fixed: miss messages reconnected, 240 damage display bug, FindStartCombatan
 
 | Order | Ticket | Notes |
 |---|---|---|
-| 40a | **GB-079** ✅ essentially complete | Migrate legacy rules to The Threshold System. See Threshold_Ruleset_v1.md §11 for the full status table. **Done:** ability scores, GetMightBonus/GetVigorBonus/GetAbilityModifier, AC→DefenseRating and THAC0→StrikeNumber renamed everywhere, ResolveAttack rebuilt as a percentage-based roll (see Threshold_Ruleset_v1.md §4 revision note), all 5 DT_Monsters rows converted, GetXPThreshold formula replacing DT_LevelProgression's XPRequired lookup, ComputeSavingThrows rebuilt with the 3-category formula (also relocated from BP_CharacterRules — found there unexpectedly, same as GetStrengthBonus before it; a full audit of BP_CharacterRules's remaining contents is worth doing at some point), ECondition renamed (Restrained/Quickened/Sapped), and ECharacterClass fully renamed (Warden/Devout/Adept/Rogue + 5 hybrid slots) including the knock-on rename of all 20 DT_LevelProgression row names. **Deliberately deferred:** ESpellSchool's 4→2 shrink — not urgent since magic isn't built. **Test suite note:** DT_THAC0Tests/DT_StrengthBonusTests/DT_AttackResolutionTests/DT_XPThresholdTests/DT_SavingThrowTests/DT_LevelCapTests are all stale against the new math — decided to delete and recreate these fresh at a later date rather than patch them individually. |
-| 40 | **GB-037** ✅ (player) ⚠ (monsters pending) | Multiple attacks — Threshold System breakpoints (Warden 1→2→2+reroll at L5/L8, Rogue/Devout 1→2 at L8, Adept always 1). No fractional/partial-round tracking, no Sweep Attack subsystem (dropped). **Done:** `GetAttacksThisRound` built on `BPL_RulesLibrary`, `RerollOnesOnDamage` wired into `ExecutePlayerAttack` per-hit `ApplyDamage` chain, `Completed` pin routed to `CheckVictory`. **TODO:** mirror multi-attack into `BP_EnemyAI.ExecuteEnemyAttack` — add `GetAttacksThisRound` call, For Loop wrapping `ResolveAttack`, per-hit `ApplyDamage` + reroll chain (same pattern as `ExecutePlayerAttack`). Current monsters all have `NumAttacks=1` (harmless) but must be done before any multi-attack monsters are added. |
-| 41 | **GB-038** | Saving throw system — wire `ComputeSavingThrows` (✅ already built and migrated under GB-079) into actual gameplay triggers. The math itself is ready and waiting; this ticket is about building `ResolveSave` and calling it from somewhere |
-| 42 | **GB-039** | Full condition system — add Poisoned, Blinded, Quickened, Slowed, Diseased, Sapped, Petrified. TickConditions each round. Enum already renamed under GB-079 — this ticket is the actual tick/effect logic, not yet built |
+| 40a | **GB-079** ✅ essentially complete | Migrate legacy rules to The Threshold System. See Threshold_Ruleset_v1.md 11 for the full status table. **Done:** ability scores, GetMightBonus/GetVigorBonus/GetAbilityModifier, AC->DefenseRating and THAC0->StrikeNumber renamed everywhere, ResolveAttack rebuilt as a percentage-based roll (see Threshold_Ruleset_v1.md 4 revision note), all 5 DT_Monsters rows converted, GetXPThreshold formula replacing DT_LevelProgression's XPRequired lookup, ComputeSavingThrows rebuilt with the 3-category formula (also relocated from BP_CharacterRules — found there unexpectedly, same as GetStrengthBonus before it; a full audit of BP_CharacterRules's remaining contents is worth doing at some point), ECondition renamed (Restrained/Quickened/Sapped), and ECharacterClass fully renamed (Warden/Devout/Adept/Rogue + 5 hybrid slots) including the knock-on rename of all 20 DT_LevelProgression row names. **Deliberately deferred:** ESpellSchool's 4->2 shrink — not urgent since magic isn't built. **Test suite note:** DT_THAC0Tests/DT_StrengthBonusTests/DT_AttackResolutionTests/DT_XPThresholdTests/DT_SavingThrowTests/DT_LevelCapTests are all stale against the new math — decided to delete and recreate these fresh at a later date rather than patch them individually. |
+| 40 | **GB-037** ✅ (player) ⚠ (monsters pending) | Multiple attacks — Threshold System breakpoints (Warden 1->2->2+reroll at L5/L8, Rogue/Devout 1->2 at L8, Adept always 1). No fractional/partial-round tracking, no Sweep Attack subsystem (dropped). **Done:** `GetAttacksThisRound` built on `BPL_RulesLibrary`, `RerollOnesOnDamage` wired into `ExecutePlayerAttack` per-hit `ApplyDamage` chain, `Completed` pin routed to `CheckVictory`. **TODO:** mirror multi-attack into `BP_EnemyAI.ExecuteEnemyAttack` — add `GetAttacksThisRound` call, For Loop wrapping `ResolveAttack`, per-hit `ApplyDamage` + reroll chain (same pattern as `ExecutePlayerAttack`). Current monsters all have `NumAttacks=1` (harmless) but must be done before any multi-attack monsters are added. |
+| 41 | **GB-038** ✅ (function ready, consumers pending) | Saving throw system — `ComputeSavingThrows` already built and migrated under GB-079. **Done:** `E_SaveType` enum created (Fortitude/Reflex/Willpower), `ResolveSave(Character, SaveType, DifficultyModifier)` built on `BPL_RulesLibrary` — Break SCharacter -> ComputeSavingThrows -> Switch(SaveType) -> SET ThisSaveTarget -> +DifficultyModifier -> DiceRoll(1d20) -> return bSuccess, RollResult, SaveTarget. **Pending:** wire into actual gameplay triggers — GB-039 (poison ticks call Fortitude), GB-044 (Ambush Strike may call Reflex), GB-046 (retreat calls Reflex). |
+| 42 | **GB-039** ✅ (8/12 complete) | Full condition system. **Done:** Poisoned (Fortitude save or 1d4 damage, wired in `TickConditions` → `OnActionComplete`), Blinded (−4 SN/DR via `ResolveAttack`, −4 Reflex via `ResolveSave`, `GetBlindPenalty` helper), Quickened (+1 attack via `GetAttacksThisRound`, +1 movement via `EnterMoveMode`/`GetMovementModifier`), Slowed (−1 attack min 1 via `GetAttacksThisRound`, −1 movement via same `GetMovementModifier`), Paralysed/Unconscious (skip-turn via `OnActionComplete` OR-chain, auto-hit via both attack functions). `GetAttacksThisRound` refactored — all class paths converge through variable sets, then Quickened/Slowed modifiers applied. **Deferred:** Diseased (game-time system needed), Sapped (level-down logic needed), Petrified (damage-type system needed). |
 | 43 | **GB-040** | Morale system — 2D6 + leader's Presence modifier vs fixed thresholds, flee behaviour, trigger conditions |
-| 44 | **GB-044** | Ambush Strike (renamed from Backstab) — Rogue condition check, Threshold System multiplier table (L1–3 ×2, L4–6 ×3, L7–9 ×4, L10 ×5), wire to attack action |
+| 44 | **GB-044** | Ambush Strike (renamed from Backstab) — Rogue condition check, Threshold System multiplier table (L1-3 x2, L4-6 x3, L7-9 x4, L10 x5), wire to attack action |
 | 45 | **GB-045** | Enemy AI — full logic: incapacitated target priority, intelligent monster spellcasting, AoE opportunity check, morale-based flee |
 | 46 | **GB-046** | Combat retreat — Reflex check, partial flee, full party retreat handling |
 
@@ -193,10 +193,10 @@ Bugs fixed: miss messages reconnected, 240 damage display bug, FindStartCombatan
 
 | Order | Ticket | Notes |
 |---|---|---|
-| 50 | **GB-047** | DT_Spells — Arcane (Adept) and Divine (Devout) lists, original spell names per Threshold_Ruleset_v1.md §9 (Force Dart, Slumber, Cinder Burst, Mend Wounds, Blessing, etc.) |
-| 51 | **GB-048** | Spell slot tracking per character — formula-driven (`clamp(CasterLevel − 2×(SpellLevel−1), 0, 4)`), no data table; arrays sized 1–5 not 1–7 |
+| 50 | **GB-047** | DT_Spells — Arcane (Adept) and Divine (Devout) lists, original spell names per Threshold_Ruleset_v1.md 9 (Force Dart, Slumber, Cinder Burst, Mend Wounds, Blessing, etc.) |
+| 51 | **GB-048** | Spell slot tracking per character — formula-driven (`clamp(CasterLevel - 2x(SpellLevel-1), 0, 4)`), no data table; arrays sized 1-5 not 1-7 |
 | 52 | **GB-049** | BP_SpellCaster — CanCast, CastSpell, slot deduction, dispatch to effect handler |
-| 53 | **GB-050** | BP_SpellEffectHandler — damage, Restrained, Mend Wounds, AoE with friendly fire, Rekindle (–1 Vigor), Renewal |
+| 53 | **GB-050** | BP_SpellEffectHandler — damage, Restrained, Mend Wounds, AoE with friendly fire, Rekindle (-1 Vigor), Renewal |
 | 54 | **GB-051** | WBP_SpellAoEPreview — grid overlay before cast confirmation |
 
 ---
@@ -291,7 +291,7 @@ Phase 4b: GB-022 ✅ (5 monsters), GB-033 ✅, GB-034 ✅
 Phase 4c: GB-036 ✅, GB-043 ✅, GB-042 ✅
 Phase 4d: GB-045 ✅ (stub complete)
 Phase 4e: GB-004a ✅ (stub), GB-041 ✅, GB-046 ✅ (partial)
-Phase 4f: GB-039 ✅ complete — Phase 5 or Phase 6 tickets next
+Phase 4h: GB-039 ✅ complete. Multiple-monster spawning built. Initiative fixed. GB-040 (Morale) next.
 ```
 
 ---

@@ -431,6 +431,6 @@ Phase 4f: GB-039 ✅ (Dead + Restrained conditions — VS subset)
 
 ---
 
-*Document updated: GB-079 ruleset migration complete. Phase 1-3 refactor complete (ForEach to FindByID on BP_CombatManager). Phase 4 combat loop verified end-to-end.*
-*Next: Phase 5/6 tickets (GB-037/038/040/044) or live HP sync (GB-039a).*
+*Document updated: GB-079 complete. Phase 1-3 refactor complete. Phase 4 combat loop verified end-to-end. Multiple-monster spawning built (5 goblins test-ready). Initiative fixed. Conditions 8/12 complete. GB-040 Morale next.*
+*Next: GB-040 (Morale). Test setup ready — 5 goblins, full-HP party. Deferred: GB-044 (Ambush Strike), GB-045 full AI, live HP sync (GB-039a).*
 *UE5.7 · Blueprints Only · Solo Dev*
