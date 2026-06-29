@@ -935,7 +935,7 @@ Event Begin Play
 ## BP_CombatManager
 **Parent Class:** Actor  
 **Location:** Blueprints/Combat/  
-**Status:** ✅ GB-033 — complete (VS scope). ✅ GB-039 — Dead and Restrained conditions wired in.
+**Status:** ✅ GB-033 — complete (VS scope). ✅ GB-039 — Dead and Restrained conditions wired in. ✅ GB-040 — morale system complete (ResolveMorale, Shaken/Fleeing transitions).
 
 ### Variables
 | Variable | Type | Notes |
@@ -1179,7 +1179,11 @@ CheckDefeat (called from OnActionComplete before turn dispatch)
        False → continue into normal turn dispatch
 ```
 
-#### EndCombat
+  #### ResolveMorale *(GB-040)*
+  **Inputs:** GroupID (Integer)  Triggers when a monster dies. Filters all monsters in the given GroupID that are alive and not already Fleeing, finds the highest MoraleRating, rolls a d100 (PercentileRoll), and transitions state on failure (Normal->Shaken, Shaken->Fleeing). Posts a message to the combat log.  **Local variables:** AffectedCombatants (TArray<S_Combatant>), HighestMorale (int), RollResult (int), NewState (EMoraleState), bAnyShaken (bool).  **Call sites:**
+  - ExecutePlayerAttack: after RemoveMarkerForCombatant -> ResolveMorale(DefenderCombatant.GroupID) -> CheckVictory  - ExecuteEnemyAttack: after ApplyCondition(Dead) -> ResolveMorale(LocalTarget.GroupID)
+
+  #### EndCombat
 ```
 EndCombat
   → XPManagerRef.AwardCombatXP(CurrentMonsterGroupID) → TotalXP
@@ -1232,7 +1236,7 @@ OnActionComplete
 ## BP_EnemyAI
 **Parent Class:** Actor
 **Location:** Blueprints/Combat/
-**Status:** ✅ GB-045 — VS scope complete. ✅ GB-039 — death check and Restrained auto-hit added.
+**Status:** ✅ GB-045 — VS scope complete. ✅ GB-039 — death check and Restrained auto-hit added. ✅ GB-040 — fleeing branch added to RunEnemyTurn.
 
 ### Variables
 | Variable | Type | Notes |
@@ -1246,6 +1250,10 @@ OnActionComplete
 **Inputs:** ActiveCombatant (SCombatant)
 ```
 RunEnemyTurn(ActiveCombatant)
+    -> Break SCombatant -> MoraleState
+    -> Branch: MoraleState == Fleeing?
+         True -> CombatManagerRef.OnActionComplete -> Return (GB-040: skip turn entirely)
+         False
   → FindNearestPartyMember(ActiveCombatant) → NearestTarget, bFound
   → Branch: bFound?
        False → CombatManagerRef.OnActionComplete (no targets, skip turn)
@@ -1316,7 +1324,7 @@ ExecuteEnemyAttack(ActiveCombatant, Target)
 ### Deferred (post-VS)
 - Incapacitated/held target priority
 - AoE opportunity check
-- Morale flee logic
+- Morale flee logic — ✅ GB-040 core complete (ResolveMorale, state transitions, turn-skip on Fleeing). Remaining: flee-to-map-edge + removal from combat
 - Intelligent monster spellcasting
 - ECombatAction_AI enum dispatch (ChooseAction function) — full priority switch in Phase 6 GB-045
 - Dynamic hit/miss message using monster name from SCombatant
@@ -1677,6 +1685,7 @@ No more natural-20/natural-1 special-casing — the `Clamp(5, 95)` does that job
 | ECombatAction | Move, Attack, Cast, UseItem, Guard, Flee | |
 | ECombatAction_AI | MoveToTarget, AttackNearest, AttackIncapacitated, CastSpell, Flee | |
 | ECondition | Normal, Restrained, Paralysed, Poisoned, Blinded, Quickened, Slowed, Diseased, Sapped, Petrified, Dead, Unconscious | ✅ GB-079 — renamed from Held/Hasted/LevelDrained. Tick/effect logic not yet built — VS scope only wires up Dead + Restrained |
+  | EMoraleState | Normal, Shaken, Fleeing | ✅ GB-040 — drives monster morale checks. Auto-valued (0/1/2). BP_CombatManager.ResolveMorale reads this to determine Shaken vs Fleeing transition |
 | ESpellSchool | MagicUser, Illusionist, Cleric, Druid | ⚠ legacy — target 2 values, Arcane/Divine, GB-079. Deliberately deferred — magic system not built yet |
 | ESpellEffect | Damage, Heal, AoEDamage, Entangle, Hold, Haste, Slow, Blind, LevelDrain, Summon, Utility | |
 | ETriggerType | OnEnterTile, OnSearchTile, OnStoryFlag, OnTimedCondition, OnCombatEnd, OnItemUsed, OnDayNight, OnMoonPhase | |
