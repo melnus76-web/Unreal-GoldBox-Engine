@@ -96,6 +96,21 @@ A Gold Box-inspired RPG built in **Unreal Engine 5.7**, Blueprints only. Tactica
 - ✅ **`OnMessagePosted_Event` loop bug fixed:** an erroneous `RefreshPartyPanel` call had been added to `OnMessagePosted_Event` in `WBP_ExplorationHUD` in a prior session. When all party members died, this created an infinite loop (message posted → refresh → condition check posted another message → loop). Removed.
 - **Deferred:** live HP sync for all hits during combat (only death is currently synced to `SCharacter` — a new ticket needed), full defeat/game-over screen (GB-046), multi-condition display in party panel, downed marker visual polish.
 
+### Phase 4h — Multiple Monster Spawning + Initiative Fix
+
+- ✅ **`BuildCombatants` rewritten.** Monster creation now wrapped in a For Loop (MonsterCount −1). `MonsterCount` parameter added to both `StartCombat` and `BuildCombatants`. Each monster gets Index+1 as CombatantID. Party section rebuilt (ForEach over GetLivingMembers, Index+1000 IDs, Y-staggered).
+- ✅ **`BuildInitiativeOrder` fixed.** ForEach Loop Body was disconnected from DiceRoll after the refactor — all combatants had Initiative=0, monsters always acted first (lowest CombatantID wins tiebreak). Reconnected.
+- ✅ **Test setup:** 5 goblins in `TriggerCombatFromEncounter` (`MonsterCount=5`). Test party reset to full HP.
+
+### Phase 4i — Ambush Strike (GB-044) ✅
+
+- ✅ **`ResolveAttack` extended** on `BPL_RulesLibrary`: added `SituationalModifier` (int, default 0) input parameter, wired into the pre-clamp hit chance chain.
+- ✅ **`GetAmbushMultiplier(RogueLevel)` built** on `BPL_RulesLibrary`: returns damage multiplier by level tier — L1-3 ×2, L4-6 ×3, L7-9 ×4, L10+ ×5, non-Rogue fallback 1.
+- ✅ **`IsFlanked(DefenderPosition, PartyCombatants, DefenderID)` built** on `BPL_RulesLibrary`: checks if any two party members are adjacent (Chebyshev distance=1) to the defender on opposite sides. Skips dead combatants and the defender themselves.
+- ✅ **`ExecutePlayerAttack` wired** in `BP_CombatManager`: after finding attacker/defender, checks if attacker is Rogue (Class1 or Class2). If Rogue and (IsFlanked OR SkillHideInShadows > 0), sets `AmbushSituational=4` and `AmbushMultiplier=GetAmbushMultiplier(Level)`. Passes situational modifier to `ResolveAttack`. Applies multiplier to both normal hit and Restrained auto-hit damage before `ApplyDamage`.
+- ✅ **`ExecuteEnemyAttack` wired** in `BP_EnemyAI`: same Ambush pattern using `LocalActiveCombatant` and `LocalTarget`.
+- **Deferred:** Hybrid Ambush classes (Skirmisher at half multiplier, Shadowpriest at half multiplier, Infiltrator at one tier ahead). Enemy Ambush currently theoretical — no monster uses SourceCharacter Rogue class. Flanked check passes all Combatants (monsters + party) to `IsFlanked`; monster flankers don't cause false positives since they need opposite positions, but a party-only filter would be cleaner.
+
 ---
 
 ## Phase 3 Test Checkpoint — PASSING ✅
@@ -431,6 +446,6 @@ Phase 4f: GB-039 ✅ (Dead + Restrained conditions — VS subset)
 
 ---
 
-*Document updated: GB-079 complete. Phase 1-3 refactor complete. Phase 4 combat loop verified end-to-end. Multiple-monster spawning built (5 goblins test-ready). Initiative fixed. Conditions 8/12 complete. GB-040 Morale next.*
-*Next: GB-040 (Morale). Test setup ready — 5 goblins, full-HP party. Deferred: GB-044 (Ambush Strike), GB-045 full AI, live HP sync (GB-039a).*
+*Document updated: GB-044 complete. Phase 4h (multi-monster spawning) + 4i (Ambush Strike). IsFlanked, GetAmbushMultiplier, SituationalModifier all built and wired into both player and enemy attack flows. GB-040 Morale tested with 5 goblins.*
+*Next: GB-045 (Full Enemy AI), GB-039a (live HP sync), GB-046 (retreat/defeat screen).*
 *UE5.7 · Blueprints Only · Solo Dev*

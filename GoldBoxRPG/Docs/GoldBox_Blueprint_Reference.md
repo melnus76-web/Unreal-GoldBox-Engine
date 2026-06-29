@@ -1009,7 +1009,29 @@ BuildCombatants(SourceMonster)
          -> MakeStruct S_Combatant: AttackRange=1 (hardcoded, same as MovementRange=6)
   ```
 
-  ### GB-033/034 Notes
+  ### ExecutePlayerAttack Ambush Strike Wiring *(GB-044)*
+```
+ExecutePlayerAttack(TargetCombatantID)
+  → FindCombatantByID → DefenderCombatant
+  → FindCombatantByID(CurrentCombatantID) → AttackerCombatant
+  → Break S_Character from AttackerCombatant.SourceCharacter
+  → Branch: Class1 == Rogue OR Class2 == Rogue?
+       True → IsFlanked(DefenderPosition, Combatants, DefenderID) OR SkillHideInShadows > 0?
+            True → Set AmbushSituational=4 → GetAmbushMultiplier(Level) → Set AmbushMultiplier
+            False → continue
+       False → continue
+  → [existing range/condition/ResolveAttack flow]
+  → ResolveAttack(Attacker, Defender, AmbushSituational) — passes 4 or 0
+  → Break S_AttackResult.Damage × AmbushMultiplier → DamageRoll  (multiplier 1 = no-op)
+  → [existing ApplyDamage flow]
+```
+
+### ExecuteEnemyAttack Ambush Strike Wiring *(GB-044)*
+Same pattern as ExecutePlayerAttack, using `LocalActiveCombatant` and `LocalTarget` function inputs. AmbushSituational wired to ResolveAttack. Multiplier applied to both normal hit and Restrained auto-hit damage.
+
+Deferred: Hybrid Ambush classes (Skirmisher/Shadowpriest at half, Infiltrator at tier+1). Enemy Ambush currently theoretical — no monster uses SourceCharacter Rogue class.
+
+### GB-033/034 Notes
 - MonsterGroupID maps directly to DT_Monsters row for VS — full MonsterGroup table lookup comes post-VS
 - Party CombatantIDs start at 1000 to avoid collision with monster IDs
 - CombatGridRef and CombatCameraRef set from Level Blueprint after SpawnManagers completes
@@ -1591,10 +1613,12 @@ All functions are globally accessible. Most are Pure except dice-rolling functio
 | GetAbilityModifier | ✅ | Score (int) | Modifier (int) | **GB-079 — built.** Generic small-bonus table, same shape as GetMightBonus's ToHit column. Reused by ComputeSavingThrows for whichever ability score is relevant per save |
 | ComputeSavingThrows | ✅ | Class (ECharacterClass), Level (int), Vigor, Reflex, Resolve (int) | FortitudeSave, ReflexSave, WillpowerSave (int) | **GB-079 — fully migrated, and relocated.** Was found living in BP_CharacterRules rather than BPL_RulesLibrary (second occurrence of this doc/reality mismatch, after GetStrengthBonus — worth a full audit of BP_CharacterRules's actual remaining contents). Deleted from BP_CharacterRules, rebuilt here. Formula: `16 − floor(Level/2) − GetAbilityModifier(relevant score) − ClassBonus`. Class bonus +2 to one save via three separate Select nodes keyed on Class: Fighter→Fortitude, Cleric→Willpower, MagicUser→Willpower, Thief→Reflex. Not yet called from any gameplay trigger — ready for GB-038 |
 | GetCombatDistance | yes | GridPositionA (FVector2D), GridPositionB (FVector2D) | Distance (int) | **GB-042 -- built.** Chebyshev distance: Max(Abs(dx), Abs(dy)). Used by ExecutePlayerAttack and ExecuteEnemyAttack for range gating |
+| GetAmbushMultiplier | ✅ | RogueLevel (int) | Multiplier (int) | **GB-044 — built.** Returns damage multiplier by level tier: L1-3 ×2, L4-6 ×3, L7-9 ×4, L10+ ×5, fallback 1 |
+| IsFlanked | ❌ | DefenderPosition (FVector2D), PartyCombatants (TArray\<SCombatant\>, ref), DefenderID (int) | bFlanked (bool) | **GB-044 — built.** Checks if any two party members are adjacent (Chebyshev distance=1) on opposite sides of the defender. Skips dead combatants and the defender themselves |
   | RollDice | ❌ | NumDice (int), DieType (int) | Total (int) | For Loop — supports multi-dice rolls (2d6 etc) |
 | DiceRollWithModifier | ❌ | NumDice (int), DieType (int), Modifier (int) | Total (int) | RollDice + Modifier |
 | PercentileRoll | ❌ | — | Result (int) | 1–100. Originally built for Rogue skill checks — now also the core die roll for ResolveAttack |
-| ResolveAttack | ✅ | Attacker (SCombatant), Defender (SCombatant) | AttackResult (SAttackResult) | **GB-079 — fully migrated.** Percentage-based resolution — see below |
+| ResolveAttack | ✅ | Attacker (SCombatant), Defender (SCombatant), SituationalModifier (int, default 0) | AttackResult (SAttackResult) | **GB-079 — fully migrated, GB-044 — SituationalModifier added.** Percentage-based resolution — see below |
 | GetXPThreshold | ✅ | Class (ECharacterClass), Level (Integer) | XPRequired (Integer) | **GB-079 — built.** Formula: `500 × Level × (Level−1) × ClassMultiplier`. Multiplier via Select node on Class: Fighter 1.0, Cleric 1.1, MagicUser 1.2, Thief 0.9 (others default 1.0, unused). Replaces reading XPRequired from DT_LevelProgression |
 
 `GetStrengthBonus`, `GetConstitutionHPBonus`, and `ComputeAC` have been deleted — fully replaced, not kept as wrappers.
@@ -1604,7 +1628,7 @@ All functions are globally accessible. Most are Pure except dice-rolling functio
 ResolveAttack(Attacker, Defender)
   → Break SCombatant (Attacker) → StrikeNumber
   → Break SCombatant (Defender) → DefenseRating
-  → RawHitChance = StrikeNumber + MightBonus(stub 0) + WeaponBonus(stub 0) + SituationalModifier(stub 0) − DefenseRating
+  → RawHitChance = StrikeNumber + MightBonus(stub 0) + WeaponBonus(stub 0) + SituationalModifier (GB-044: +4 for Ambush, default 0) − DefenseRating
   → FinalHitChance = Clamp(RawHitChance, 5, 95)
   → PercentileRoll() → SET D100Roll
   → Branch: D100Roll <= FinalHitChance?
@@ -1617,7 +1641,7 @@ No more natural-20/natural-1 special-casing — the `Clamp(5, 95)` does that job
 ### ResolveAttack VS Stubs (still outstanding, unrelated to GB-079)
 - **MightBonus** — still hardcoded 0. Replace with `GetMightBonus` once equipment/inventory exists (GB-053)
 - **WeaponBonus** — returns 0. Replace with equipped weapon magic bonus (GB-053)
-- **SituationalModifier** — returns 0. Replace with condition checks (GB-039)
+- **SituationalModifier** — **GB-044: now wired.** Receives +4 from Ambush Strike when a Rogue attacks an unaware or flanked target. Default 0 otherwise.
 - **Damage** — 1d6 default. Replace with weapon damage dice from DT_Items (GB-053)
 - **Monster Might/Reflex** — SMonster has no ability scores; bonuses are pre-baked directly into each monster's StrikeNumber/DefenseRating in DT_Monsters instead (the recommended approach, now actually applied — see DT_Monsters below)
 

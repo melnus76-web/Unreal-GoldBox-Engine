@@ -499,11 +499,13 @@ Everything else comes later.
 - EndCombat: clears Combatants/InitiativeOrder/SpawnedMarkers arrays, resets bools, returns camera to BP_ExplorerPawn, IsMovementLocked=false, ChangeGameState(Exploration)
 - Deferred: XP award (GB-041), loot drop, defeat handling, retreat system
 
-## GB-044 Create Ambush Strike Action (Rogue) — *(renamed from Backstab, target: The Threshold System)*
-- BP_AmbushResolver
-- Conditions: target unaware OR Rogue moved with Stealth success last turn
-- MultiplierByLevel: L1–3 ×2, L4–6 ×3, L7–9 ×4, L10 ×5 (and +4 to hit)
-- ResolveAmbushStrike(Rogue, Target) → FAttackResult (with multiplied damage)
+## GB-044 Create Ambush Strike Action (Rogue) ✅ — *(built, target: The Threshold System)*
+- ✅ Implemented directly in `ExecutePlayerAttack` and `ExecuteEnemyAttack` rather than a separate BP_AmbushResolver
+- ✅ Conditions: target flanked (IsFlanked) OR Rogue has HideInShadows > 0
+- ✅ MultiplierByLevel: L1–3 ×2, L4–6 ×3, L7–9 ×4, L10 ×5 via `GetAmbushMultiplier(RogueLevel)`
+- ✅ +4 to hit via `SituationalModifier` parameter on `ResolveAttack`
+- ✅ Damage multiplied before ApplyDamage for both normal hits and Restrained auto-hits
+- Deferred: Hybrid classes (Skirmisher/Shadowpriest half multiplier, Infiltrator tier+1)
 
 ## GB-045 Create Enemy AI
 - BP_EnemyAI

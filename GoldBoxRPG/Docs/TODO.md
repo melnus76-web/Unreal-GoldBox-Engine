@@ -32,6 +32,8 @@
 | Monster AI multi-attack | GB-037 | `GetAttacksThisRound` works for player but `ExecuteEnemyAttack` doesn't use it yet. Current monsters all have `NumAttacks=1` (harmless) |
 | Adjacency check for attacks | GB-042 | Complete. S_Monster/S_Combatant.AttackRange fields, GetCombatDistance in BPL_RulesLibrary, range gate in ExecutePlayerAttack and ExecuteEnemyAttack. Monsters default melee (range=1), players hardcoded range=1 until weapon tables exist |
 | Movement range redesign | GB-042 | Currently hardcoded to 3 for VS. Needs rules-based system (class/race/armour-based) |
+| Hybrid Ambush classes (Skirmisher/Shadowpriest/Infiltrator) | GB-044 | Half multiplier for Skirmisher/Shadowpriest, one tier ahead for Infiltrator. Deferred until hybrid class system built |
+| Party-only filter for IsFlanked | GB-044 (polish) | Currently passes all Combatants (party + monsters) — works fine but a filtered party-only array would be cleaner |
 | Attack range / diagonal movement | GB-042 | Chebyshev allows 8-directional movement. Consider whether diagonal should cost extra |
 
 ---
