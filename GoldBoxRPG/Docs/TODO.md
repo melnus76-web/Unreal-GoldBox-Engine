@@ -1,4 +1,4 @@
-﻿# Gold Box RPG â€” TODO / Deferred Items
+# Gold Box RPG â€” TODO / Deferred Items
 ## UE5.7 Â· Blueprints Only Â· Solo Dev
 
 ---
@@ -41,7 +41,7 @@
 | Item | Ticket | Notes |
 |---|---|---|
 | ResolveSave consumer wiring | GB-038 | `ResolveSave` built but nothing calls it yet. GB-039 poison ticks call Fortitude. Still needs: Ambush Strike (GB-044) Reflex, retreat (GB-046) Reflex |
-| Morale system | GB-040 | ✅ Core complete: E_MoraleState enum, S_Combatant.MoraleState + GroupID, ResolveMorale(GroupID) in BP_CombatManager, Normal→Shaken→Fleeing transitions, Fleeing monsters skip turn. Remaining: flee-to-map-edge + removal from combat |
+| Morale system | GB-040 | ✅ Core complete: E_MoraleState enum, S_Combatant.MoraleState + GroupID, ResolveMorale(GroupID) in BP_CombatManager, Normal→Shaken→Fleeing transitions, Fleeing monsters skip turn. Remaining: flee-to-map-edge + removal from combat. **Polish:** base morale check on total morale rating of the monster group (sum all monsters' MoraleRating) rather than per-monster |
 | Flee-to-map-edge | GB-040 | Fleeing monsters currently skip turn in place. Full flee mechanic (move toward nearest map edge, exit combat on arrival) still deferred |
 | Ambush Strike | GB-044 | Rogue condition check, Threshold System multiplier table (L1-3 x2, L4-6 x3, L7-9 x4, L10 x5) |
 | Full Enemy AI | GB-045 | Incapacitated target priority, intelligent spellcasting, AoE opportunity, morale flee |
