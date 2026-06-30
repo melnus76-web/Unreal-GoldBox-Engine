@@ -72,7 +72,7 @@ A Gold Box-inspired RPG built in **Unreal Engine 5.7**, Blueprints only. Tactica
 - ✅ **GB-046 (partial)** — CheckVictory + EndCombat. Victory when all monsters HP≤0. Returns camera, unlocks movement, clears combat state.
 
 ### Phase 4d — Enemy AI (EPIC 008)
-- ✅ **GB-045** — BP_EnemyAI stub complete (VS scope). Spawned by BP_GameManager, CombatManagerRef set by StartEnemyTurn. Three functions: FindNearestPartyMember (Chebyshev distance, skips IsMonster + HP≤0), MoveOneStepToward (GetAdjacentTiles → IsTraversable + IsOccupied filter → pick closest tile → ClearOccupant/SetOccupant), ExecuteEnemyAttack (ResolveAttack → ApplyDamage → CheckVictory). Two shared utility functions added to BP_CombatManager: UpdateCombatantGridPosition and MoveMarkerToTile (reusable by both player and enemy movement). ApplyDamage added to BP_CombatManager (updates SCombatant HP in Combatants array). Verified: goblin moves one tile per turn toward nearest party member, respects traversability and occupancy, attacks correct target, combat continues correctly after hit, combat ends correctly on goblin death.
+- ✅ **GB-045** — BP_EnemyAI full movement AI complete. RunEnemyTurn dispatches via ChooseAction (MoveToTarget/MeleeAttack/CastSpell/Flee/SkipTurn/CastAOESpell). BFS pathfinding (FindPathBFS) navigates to nearest party member and fleeing edge tiles with GetAdjacentTiles/BFS stack/OccupancyMap, avoiding blocked and occupied tiles (target tile exempted via NOT IsOccupied OR Neighbour==End gate). Three movement branches (Morale Fleeing, MoveToTarget, Switch Flee) all ClearOccupant before FindPathBFS, grab path[1] for actual next step. **TODO:** Cast Spell and Cast AOESpell are PrintString stubs only; Incapacitated target priority and AoE opportunity detection deferred.
 
 ### Phase 4e — Combat HUD and XP (EPIC 008/EPIC 004)
 - ✅ **GB-004a** — WBP_CombatHUD stub complete. Bottom action bar (Move/Attack/EndTurn/Flee buttons, round counter and turn indicator placeholders) shown/hidden directly by BP_CombatManager via CombatHUDRef — OnGameStateUpdated binding does not work for widgets not yet in viewport, so direct manager-driven show/hide is used instead (same pattern as WBP_EncounterScreen).
@@ -95,6 +95,21 @@ A Gold Box-inspired RPG built in **Unreal Engine 5.7**, Blueprints only. Tactica
 - ✅ **`ApplyDeathToCharacter` built on `BP_PartyManager`:** loops `PartyMembers`, matches by `CharacterID`, adds `Dead` to Conditions array, sets `CurrentHP=0`, writes back, fires `OnPartyUpdated` → `WBP_ExplorationHUD.RefreshPartyPanel`. `PartyManagerRef` added to `BP_EnemyAI`, set in `StartEnemyTurn` alongside existing `CombatManagerRef`.
 - ✅ **`OnMessagePosted_Event` loop bug fixed:** an erroneous `RefreshPartyPanel` call had been added to `OnMessagePosted_Event` in `WBP_ExplorationHUD` in a prior session. When all party members died, this created an infinite loop (message posted → refresh → condition check posted another message → loop). Removed.
 - **Deferred:** live HP sync for all hits during combat (only death is currently synced to `SCharacter` — a new ticket needed), full defeat/game-over screen (GB-046), multi-condition display in party panel, downed marker visual polish.
+
+### Phase 4h — Multiple Monster Spawning + Initiative Fix
+
+- ✅ **`BuildCombatants` rewritten.** Monster creation now wrapped in a For Loop (MonsterCount −1). `MonsterCount` parameter added to both `StartCombat` and `BuildCombatants`. Each monster gets Index+1 as CombatantID. Party section rebuilt (ForEach over GetLivingMembers, Index+1000 IDs, Y-staggered).
+- ✅ **`BuildInitiativeOrder` fixed.** ForEach Loop Body was disconnected from DiceRoll after the refactor — all combatants had Initiative=0, monsters always acted first (lowest CombatantID wins tiebreak). Reconnected.
+- ✅ **Test setup:** 5 goblins in `TriggerCombatFromEncounter` (`MonsterCount=5`). Test party reset to full HP.
+
+### Phase 4i — Ambush Strike (GB-044) ✅
+
+- ✅ **`ResolveAttack` extended** on `BPL_RulesLibrary`: added `SituationalModifier` (int, default 0) input parameter, wired into the pre-clamp hit chance chain.
+- ✅ **`GetAmbushMultiplier(RogueLevel)` built** on `BPL_RulesLibrary`: returns damage multiplier by level tier — L1-3 ×2, L4-6 ×3, L7-9 ×4, L10+ ×5, non-Rogue fallback 1.
+- ✅ **`IsFlanked(DefenderPosition, PartyCombatants, DefenderID)` built** on `BPL_RulesLibrary`: checks if any two party members are adjacent (Chebyshev distance=1) to the defender on opposite sides. Skips dead combatants and the defender themselves.
+- ✅ **`ExecutePlayerAttack` wired** in `BP_CombatManager`: after finding attacker/defender, checks if attacker is Rogue (Class1 or Class2). If Rogue and (IsFlanked OR SkillHideInShadows > 0), sets `AmbushSituational=4` and `AmbushMultiplier=GetAmbushMultiplier(Level)`. Passes situational modifier to `ResolveAttack`. Applies multiplier to both normal hit and Restrained auto-hit damage before `ApplyDamage`.
+- ✅ **`ExecuteEnemyAttack` wired** in `BP_EnemyAI`: same Ambush pattern using `LocalActiveCombatant` and `LocalTarget`.
+- **Deferred:** Hybrid Ambush classes (Skirmisher at half multiplier, Shadowpriest at half multiplier, Infiltrator at one tier ahead). Enemy Ambush currently theoretical — no monster uses SourceCharacter Rogue class. Flanked check passes all Combatants (monsters + party) to `IsFlanked`; monster flankers don't cause false positives since they need opposite positions, but a party-only filter would be cleaner.
 
 ---
 
@@ -191,6 +206,11 @@ A Gold Box-inspired RPG built in **Unreal Engine 5.7**, Blueprints only. Tactica
 | Movement range too large causing infinite loop | Fixed — MovementRange reduced to 3 for VS testing (rules system to be redesigned post-VS) |
 | ClearHighlights only clearing one highlight | Fixed — Clear Array was inside Loop Body (fired after first destroy); moved to For Each Completed |
 | IsMovementLocked not blocking input during combat | Fixed — CanMove was incorrectly used for combat lock; replaced with IsMovementLocked |
+  | Enemies not moving (BFS path always empty) | Fixed — GetAdjacentTiles DX/DY swap, target tile occupancy exemption in FindPathBFS, ClearOccupant before BFS in all branches, GetArrayItem index 0->1 |
+  | Enemies occupying same tile | Fixed — IsOccupied added to IsTraversable, start tile cleared before BFS |
+  | No Path To Target false negative | Fixed — FindPathBFS now exempts target tile from occupancy check |
+  | Enemies disappearing from board | Fixed — root cause was GetAdjacentTiles DX/DY swap producing incorrect paths causing SetOccupant overwrites; resolved by all BFS pathfinding fixes |
+  | Infinite loop on enemy turn | Fixed — ClearOccupant moved before FindPathBFS in MoveToTarget branch; BFS was pathing through occupied tile cascading to runaway |
 | CheckVictory always returning false | Fixed — IsMonster=false (party members) was routing to SET AllEnemiesDead=false; party members now skipped entirely, only IsMonster=true AND CurrentHP>0 sets the flag |
 | ExecutePlayerAttack death check reading wrong HP | Fixed — death check was reading CurrentHP from Break SCombatant (old value) instead of CurrentHP-Damage (new value); promoted subtraction result to local variable NewHP, used for both Make SCombatant and the ≤0 death check |
 | Damage calculated before For Each loop found correct combatant | Fixed — moved damage calculation inside the loop, after the matching combatant is found |
@@ -431,6 +451,6 @@ Phase 4f: GB-039 ✅ (Dead + Restrained conditions — VS subset)
 
 ---
 
-*Document updated: GB-079 complete. Phase 1-3 refactor complete. Phase 4 combat loop verified end-to-end. Multiple-monster spawning built (5 goblins test-ready). Initiative fixed. Conditions 8/12 complete. GB-040 Morale next.*
-*Next: GB-040 (Morale). Test setup ready — 5 goblins, full-HP party. Deferred: GB-044 (Ambush Strike), GB-045 full AI, live HP sync (GB-039a).*
+*Document updated: GB-044 complete. Phase 4h (multi-monster spawning) + 4i (Ambush Strike). IsFlanked, GetAmbushMultiplier, SituationalModifier all built and wired into both player and enemy attack flows. GB-040 Morale tested with 5 goblins.*
+*Next: GB-045 (Full Enemy AI), GB-039a (live HP sync), GB-046 (retreat/defeat screen).*
 *UE5.7 · Blueprints Only · Solo Dev*
