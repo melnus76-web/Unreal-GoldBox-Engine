@@ -72,7 +72,7 @@ A Gold Box-inspired RPG built in **Unreal Engine 5.7**, Blueprints only. Tactica
 - ✅ **GB-046 (partial)** — CheckVictory + EndCombat. Victory when all monsters HP≤0. Returns camera, unlocks movement, clears combat state.
 
 ### Phase 4d — Enemy AI (EPIC 008)
-- ✅ **GB-045** — BP_EnemyAI stub complete (VS scope). Spawned by BP_GameManager, CombatManagerRef set by StartEnemyTurn. Three functions: FindNearestPartyMember (Chebyshev distance, skips IsMonster + HP≤0), MoveOneStepToward (GetAdjacentTiles → IsTraversable + IsOccupied filter → pick closest tile → ClearOccupant/SetOccupant), ExecuteEnemyAttack (ResolveAttack → ApplyDamage → CheckVictory). Two shared utility functions added to BP_CombatManager: UpdateCombatantGridPosition and MoveMarkerToTile (reusable by both player and enemy movement). ApplyDamage added to BP_CombatManager (updates SCombatant HP in Combatants array). Verified: goblin moves one tile per turn toward nearest party member, respects traversability and occupancy, attacks correct target, combat continues correctly after hit, combat ends correctly on goblin death.
+- ✅ **GB-045** — BP_EnemyAI full movement AI complete. RunEnemyTurn dispatches via ChooseAction (MoveToTarget/MeleeAttack/CastSpell/Flee/SkipTurn/CastAOESpell). BFS pathfinding (FindPathBFS) navigates to nearest party member and fleeing edge tiles with GetAdjacentTiles/BFS stack/OccupancyMap, avoiding blocked and occupied tiles (target tile exempted via NOT IsOccupied OR Neighbour==End gate). Three movement branches (Morale Fleeing, MoveToTarget, Switch Flee) all ClearOccupant before FindPathBFS, grab path[1] for actual next step. **TODO:** Cast Spell and Cast AOESpell are PrintString stubs only; Incapacitated target priority and AoE opportunity detection deferred.
 
 ### Phase 4e — Combat HUD and XP (EPIC 008/EPIC 004)
 - ✅ **GB-004a** — WBP_CombatHUD stub complete. Bottom action bar (Move/Attack/EndTurn/Flee buttons, round counter and turn indicator placeholders) shown/hidden directly by BP_CombatManager via CombatHUDRef — OnGameStateUpdated binding does not work for widgets not yet in viewport, so direct manager-driven show/hide is used instead (same pattern as WBP_EncounterScreen).
@@ -206,6 +206,11 @@ A Gold Box-inspired RPG built in **Unreal Engine 5.7**, Blueprints only. Tactica
 | Movement range too large causing infinite loop | Fixed — MovementRange reduced to 3 for VS testing (rules system to be redesigned post-VS) |
 | ClearHighlights only clearing one highlight | Fixed — Clear Array was inside Loop Body (fired after first destroy); moved to For Each Completed |
 | IsMovementLocked not blocking input during combat | Fixed — CanMove was incorrectly used for combat lock; replaced with IsMovementLocked |
+  | Enemies not moving (BFS path always empty) | Fixed — GetAdjacentTiles DX/DY swap, target tile occupancy exemption in FindPathBFS, ClearOccupant before BFS in all branches, GetArrayItem index 0->1 |
+  | Enemies occupying same tile | Fixed — IsOccupied added to IsTraversable, start tile cleared before BFS |
+  | No Path To Target false negative | Fixed — FindPathBFS now exempts target tile from occupancy check |
+  | Enemies disappearing from board | Fixed — root cause was GetAdjacentTiles DX/DY swap producing incorrect paths causing SetOccupant overwrites; resolved by all BFS pathfinding fixes |
+  | Infinite loop on enemy turn | Fixed — ClearOccupant moved before FindPathBFS in MoveToTarget branch; BFS was pathing through occupied tile cascading to runaway |
 | CheckVictory always returning false | Fixed — IsMonster=false (party members) was routing to SET AllEnemiesDead=false; party members now skipped entirely, only IsMonster=true AND CurrentHP>0 sets the flag |
 | ExecutePlayerAttack death check reading wrong HP | Fixed — death check was reading CurrentHP from Break SCombatant (old value) instead of CurrentHP-Damage (new value); promoted subtraction result to local variable NewHP, used for both Make SCombatant and the ≤0 death check |
 | Damage calculated before For Each loop found correct combatant | Fixed — moved damage calculation inside the loop, after the matching combatant is found |
