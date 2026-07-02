@@ -13,6 +13,7 @@
 | GetArrayItem index 0→1 | All three branches grab path[1] instead of path[0] (which was the start tile, causing no-ops) |
 | Enemies occupying same tile | IsOccupied added to IsTraversable; start tile cleared before BFS; target tile exempted from occupancy check |
 | BuildInitiativeOrder Loop Body disconnected | ForEach Loop Body was not wired to DiceRoll after refactor. All combatants had Initiative=0. Reconnected. |
+| CombatManager SRP refactor | BuildCombatants split into BuildMonsterCombatant + BuildCharacterCombatant + AddCombatantToGrid (single responsibility each). ExecutePlayerAttack split into ResolveSingleAttack + ProcessAttackOutcome. Fixed bug: player combatants were receiving empty character data (InnerLoopArrayElement was never wired). |
 
 ---
 
