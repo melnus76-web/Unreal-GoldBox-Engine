@@ -13,6 +13,7 @@
 | GetArrayItem index 0→1 | All three branches grab path[1] instead of path[0] (which was the start tile, causing no-ops) |
 | Enemies occupying same tile | IsOccupied added to IsTraversable; start tile cleared before BFS; target tile exempted from occupancy check |
 | BuildInitiativeOrder Loop Body disconnected | ForEach Loop Body was not wired to DiceRoll after refactor. All combatants had Initiative=0. Reconnected. |
+| CombatManager SRP refactor | BuildCombatants split into BuildMonsterCombatant + BuildCharacterCombatant + AddCombatantToGrid (single responsibility each). ExecutePlayerAttack split into ResolveSingleAttack + ProcessAttackOutcome. Fixed bug: player combatants were receiving empty character data (InnerLoopArrayElement was never wired). |
 
 ---
 
@@ -96,6 +97,27 @@
 | BP_CharacterRules audit | Two functions found living there instead of BPL_RulesLibrary (GetStrengthBonus, ComputeSavingThrows). Worth checking what else remains there |
 
 ---
+
+
+
+---
+
+## Class-Level SRP — BP_CombatManager (GB-NEW)
+
+57 functions on one Actor. Individual functions are clean after refactor, but the class itself is a god object. Split into ActorComponents:
+
+| Component | Functions | Domain |
+|---|---|---|
+| TurnFlowComponent | 10 | OnActionComplete, AdvanceToNextCombatant, DispatchTurn, StartPlayerTurn, StartEnemyTurn, FinishEnemyTurn, FindStartCombatant, FindActiveCombatant, BuildInitiativeOrder, SortInitiativeOrder |
+| CombatActions | 9 | ExecutePlayerAttack, ResolveSingleAttack, ProcessAttackOutcome, ApplyDamage, EnterTargetSelectMode, EnterMoveMode, ExecuteCombatantMove, EndPlayerTurn, RefreshMoveHighlights |
+| StatusEffects | 10 | ApplyCondition, RemoveCondition, HasCondition, TickConditions, CheckDefeat, CheckVictory, IsCombatantIncapacitated, SetMarkerDowned, ResolveMorale, RetreatCharacter |
+| CombatSetup | 12 | StartCombat, EndCombat, CleanupCombatState, HandleCombatVictory, HandleCombatDefeat, BuildCombatants, BuildMonsterCombatant, BuildCharacterCombatant, AddCombatantToGrid, SpawnCombatantMarkers, RemoveMarkerForCombatant, DestroyCombatMarkers |
+| PostCombat | 5 | AwardAndDistributeXP, PostVictoryMessages, ProcessLootDrops, ShowDefeatScreen, HandleCombatVictory |
+| CameraPresentation | 8 | SwitchToCombatCamera, LockPlayerForCombat, EnableCombatInput, TransitionToCombat, RestoreExplorationState, ResetCombatData, MoveMarkerToTile, UpdateCombatantGridPosition |
+
+Shared utilities (stay on Actor): FindCombatantByID, FindMarkerByID.
+
+Cross-component calls (e.g. ProcessAttackOutcome → ResolveMorale) would become component refs or go through the parent Actor.
 
 ## Named CharacterID Constraint
 

@@ -935,7 +935,7 @@ Event Begin Play
 ## BP_CombatManager
 **Parent Class:** Actor  
 **Location:** Blueprints/Combat/  
-**Status:** ✅ GB-033 — complete (VS scope). ✅ GB-039 — Dead and Restrained conditions wired in. ✅ GB-040 — morale system complete (ResolveMorale, Shaken/Fleeing transitions).
+**Status:** ✅ GB-033 — complete (VS scope). ✅ GB-039 — Dead and Restrained conditions wired in. ✅ GB-040 — morale system complete (ResolveMorale, Shaken/Fleeing transitions). ✅ Refactored — ExecutePlayerAttack split into ResolveSingleAttack + ProcessAttackOutcome; BuildCombatants split into BuildMonsterCombatant + BuildCharacterCombatant + AddCombatantToGrid.
 
 ### Variables
 | Variable | Type | Notes |

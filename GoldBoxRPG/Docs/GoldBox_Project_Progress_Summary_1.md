@@ -98,7 +98,7 @@ A Gold Box-inspired RPG built in **Unreal Engine 5.7**, Blueprints only. Tactica
 
 ### Phase 4h — Multiple Monster Spawning + Initiative Fix
 
-- ✅ **`BuildCombatants` rewritten.** Monster creation now wrapped in a For Loop (MonsterCount −1). `MonsterCount` parameter added to both `StartCombat` and `BuildCombatants`. Each monster gets Index+1 as CombatantID. Party section rebuilt (ForEach over GetLivingMembers, Index+1000 IDs, Y-staggered).
+- ✅ **`BuildCombatants` refactored for single responsibility.** Split into three functions: `BuildMonsterCombatant` (monster struct → combatant), `BuildCharacterCombatant` (character struct → combatant, fixes bug where player data was never wired), and `AddCombatantToGrid` (grid registration + array add only). `ExecutePlayerAttack` similarly split into `ResolveSingleAttack` (per-attack hit/damage/death) and `ProcessAttackOutcome` (post-attack morale/victory). BuildCombatants originally rewritten with For Loop (MonsterCount −1). `MonsterCount` parameter added to both `StartCombat` and `BuildCombatants`. Each monster gets Index+1 as CombatantID. Party section rebuilt (ForEach over GetLivingMembers, Index+1000 IDs, Y-staggered).
 - ✅ **`BuildInitiativeOrder` fixed.** ForEach Loop Body was disconnected from DiceRoll after the refactor — all combatants had Initiative=0, monsters always acted first (lowest CombatantID wins tiebreak). Reconnected.
 - ✅ **Test setup:** 5 goblins in `TriggerCombatFromEncounter` (`MonsterCount=5`). Test party reset to full HP.
 
