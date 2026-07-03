@@ -98,6 +98,27 @@
 
 ---
 
+
+
+---
+
+## Class-Level SRP — BP_CombatManager (GB-NEW)
+
+57 functions on one Actor. Individual functions are clean after refactor, but the class itself is a god object. Split into ActorComponents:
+
+| Component | Functions | Domain |
+|---|---|---|
+| TurnFlowComponent | 10 | OnActionComplete, AdvanceToNextCombatant, DispatchTurn, StartPlayerTurn, StartEnemyTurn, FinishEnemyTurn, FindStartCombatant, FindActiveCombatant, BuildInitiativeOrder, SortInitiativeOrder |
+| CombatActions | 9 | ExecutePlayerAttack, ResolveSingleAttack, ProcessAttackOutcome, ApplyDamage, EnterTargetSelectMode, EnterMoveMode, ExecuteCombatantMove, EndPlayerTurn, RefreshMoveHighlights |
+| StatusEffects | 10 | ApplyCondition, RemoveCondition, HasCondition, TickConditions, CheckDefeat, CheckVictory, IsCombatantIncapacitated, SetMarkerDowned, ResolveMorale, RetreatCharacter |
+| CombatSetup | 12 | StartCombat, EndCombat, CleanupCombatState, HandleCombatVictory, HandleCombatDefeat, BuildCombatants, BuildMonsterCombatant, BuildCharacterCombatant, AddCombatantToGrid, SpawnCombatantMarkers, RemoveMarkerForCombatant, DestroyCombatMarkers |
+| PostCombat | 5 | AwardAndDistributeXP, PostVictoryMessages, ProcessLootDrops, ShowDefeatScreen, HandleCombatVictory |
+| CameraPresentation | 8 | SwitchToCombatCamera, LockPlayerForCombat, EnableCombatInput, TransitionToCombat, RestoreExplorationState, ResetCombatData, MoveMarkerToTile, UpdateCombatantGridPosition |
+
+Shared utilities (stay on Actor): FindCombatantByID, FindMarkerByID.
+
+Cross-component calls (e.g. ProcessAttackOutcome → ResolveMorale) would become component refs or go through the parent Actor.
+
 ## Named CharacterID Constraint
 
 `SCharacter.Name` is not guaranteed unique — any character-matching logic must use `CharacterID`, never `Name`. CharacterID is auto-assigned sequentially by `BP_PartyManager.AddCharacter`.
