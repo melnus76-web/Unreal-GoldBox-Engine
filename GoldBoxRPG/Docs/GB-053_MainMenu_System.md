@@ -58,59 +58,68 @@ CanvasPanel (root)
 
 ---
 
-## Phase 3: WBP_CharacterCreation Widget
+## Phase 3: WBP_CharacterCreation Widget 🚧
 
-```
-CanvasPanel (root)
-├── Border "CreationBorder"
-│   Padding = 16, centered
-│   ├── VerticalBox "CreationVBox"
-│   │   ├── TextBlock "Title"  → "CREATE CHARACTER"
-│   │   ├── HorizontalBox: TextBlock "Name:" + EditableTextBox "NameInput"
-│   │   ├── HorizontalBox: TextBlock "Race:" + ComboBox "RaceCombo" (E_Race values)
-│   │   ├── HorizontalBox: TextBlock "Class:" + ComboBox "ClassCombo" (E_CharacterClass)
-│   │   ├── HorizontalBox: TextBlock "Multi:" + ComboBox "MultiCombo" (E_CharacterClass)
-│   │   ├── HorizontalBox: TextBlock "Align:" + ComboBox "AlignCombo" (E_Alignment)
-│   │   ├── HorizontalBox: TextBlock "Gender:" + ComboBox "GenderCombo" (Male/Female)
-│   │   ├── Separator
-│   │   ├── TextBlock "AbilityLabel"  → "ABILITY SCORES  (3d6 each)"
-│   │   ├── Button "Btn_RollAll"  → "Roll All"
-│   │   ├── GridPanel "AbilityGrid" (6 rows)
-│   │   │   ├── "Might:"     TextBlock + Button "Roll"
-│   │   │   ├── "Acuity:"    TextBlock + Button "Roll"
-│   │   │   ├── "Resolve:"   TextBlock + Button "Roll"
-│   │   │   ├── "Reflex:"    TextBlock + Button "Roll"
-│   │   │   ├── "Vigor:"     TextBlock + Button "Roll"
-│   │   │   └── "Presence:"  TextBlock + Button "Roll"
-│   │   ├── Separator
-│   │   ├── HorizontalBox
-│   │   │   ├── Button "Btn_Accept"  → "Accept"
-│   │   │   └── Button "Btn_Cancel"  → "Cancel"
-```
+**Status:** In progress. Steps 0–4 complete, ConfirmPanel widget tree built, save logic pending.
 
-**Variables:**
-| Variable | Type |
+**Architecture:** 7-step WidgetSwitcher with Next/Back navigation and per-step validation gates.
+
+> **Deviation from original spec:** Original design was a single-panel form with ComboBoxes. Actual implementation uses a 7-panel wizard flow (one step per screen) with boolean selection gates (`bChooseRace`, `bChooseClass`, `bChooseAlignment`) and an AND-chain gate on the Next button. CharacterName stored as Text (not String). Alignment uses `E_Morality` (7 values) instead of D&D 3×3 `E_Alignment`. Save target is `DT_CharacterRoster` DataTable, not `BP_PartyManager.AddCharacter`.
+
+### Panel Structure
+
+| Index | Panel | Status |
+|---|---|---|
+| 0 | `RollStatsPanel` | ✅ Complete |
+| 1 | `ChooseRacepanel` | ✅ Complete |
+| 2 | `ChooseClassPanel` | ✅ Complete |
+| 3 | `ChooseAlignmentPanel` | ✅ Complete |
+| 4 | `NameEntryPanel` | ✅ Complete |
+| 5 | `PortraitPanel` | ❌ Empty placeholder |
+| 6 | `ConfirmPanel` | 🚧 Widget tree built |
+
+### Key Variables
+
+| Variable | Type | Default |
+|---|---|---|
+| `CurrentStepIndex` | int32 | 0 |
+| `MightScore`–`PresenceScore` | int32 (×6) | 0 |
+| `SelectedRace` | E_Race (byte) | Human |
+| `SelectedClass` | E_CharacterClass (byte) | Warden |
+| `SelectedAlignment` | E_Morality (byte) | Righteous |
+| `CharacterName` | Text | (empty) |
+| `bChooseRace`/`bChooseClass`/`bChooseAlignment` | bool | False |
+
+### Functions
+
+| Function | Purpose |
 |---|---|
-| `PartyManagerRef` | `BP_PartyManager_C` |
-| `RolledMight` | `int32` |
-| `RolledAcuity` | `int32` |
-| `RolledResolve` | `int32` |
-| `RolledReflex` | `int32` |
-| `RolledVigor` | `int32` |
-| `RolledPresence` | `int32` |
+| `UpdateNavigation(step)` | Switches panels, updates header, toggles Back button, sets Next→Confirm on step 6 |
+| `ValidateRollStats()` → bool | Pure: all 6 stats > 0 |
+| `SelectRace/Class/Alignment(in)` | Sets selected enum, highlights button, sets selection gate flag |
+| `GenerateRandomName()` → Text | Pure: random syllable-based name generator |
+| `GetRaceDisplayName/GetClassDisplayName/GetAlignmentDisplayName` | Pure: enum → display Text |
+| `PopulateConfirmPanel()` | ❌ Not yet built — fills ConfirmPanel TextBlocks |
 
-**Logic:**
-- `RollAbilityScore()` → `BPL_RulesLibrary.DiceRoll(3, 6)` → 3d6
-- `RollAll()` → calls DiceRoll 6 times, updates all TextBlocks
-- `BuildCharacter()`:
-  1. Construct `FS_Character` from all widget fields
-  2. `MaxHP = BPL_RulesLibrary.ComputeMaxHP(Level=1, Might, Vigor)`
-  3. `CurrentHP = MaxHP`
-  4. `Level = 1`, `XP = 0`
-  5. All other fields default/zero
-- `OnAccept()` → validate name not empty → BuildCharacter → PartyManager.AddCharacter → RemoveFromParent
-- `OnCancel()` → RemoveFromParent
-- Party capped at 6 (disable "Create Character" on main menu when full)
+### Next Button Gate (AND Chain)
+
+```
+Advance if ALL of:
+  (step != 6 OR ValidateRollStats)
+  (step != 1 OR bChooseRace)
+  (step != 2 OR bChooseClass)
+  (step != 3 OR bChooseAlignment)
+  (step != 4 OR CharacterName != "")
+```
+
+### Pending Work
+
+- [ ] `PopulateConfirmPanel` function
+- [ ] Branch Next button for step 6 → save flow
+- [ ] `Make S_Character` → `Add Data Table Row` (DT_CharacterRoster) → `Remove from Parent`
+- [ ] PortraitPanel (step 5)
+
+Full details: see `Character_Creation_Dev_Guide.md`.
 
 ---
 
@@ -181,8 +190,8 @@ flowchart TD
     
     G --> H{"Player clicks?"}
     H -->|"Create Character"| I["WBP_CharacterCreation opens"]
-    I --> J["Roll stats, pick race/class"]
-    J --> K["Accept → AddCharacter"]
+    I --> J["7-step wizard: roll stats, race, class, alignment, name, confirm"]
+    J --> K["Confirm → Add to DT_CharacterRoster"]
     K --> G
     
     H -->|"Start Game"| L["PendingPartyMembers = PartyMembers"]
@@ -209,6 +218,7 @@ flowchart TD
 |---|---|---|
 | MainMenu | New level | `/Game/Maps/MainMenu` |
 | WBP_MainMenu | New widget | `/Game/Blueprints/UI/WBP_MainMenu` |
-| WBP_CharacterCreation | New widget | `/Game/Blueprints/UI/WBP_CharacterCreation` |
+| WBP_CharacterCreation | In progress | `/Game/Blueprints/UI/WBP_CharacterCreation` |
+| DT_CharacterRoster | Created | `/Game/Blueprints/Data/DT_CharacterRoster` |
 | BP_GameManager | Modify | `/Game/Blueprints/Core/BP_GameManager` |
 | Project Settings | Modify | Game Default Map → MainMenu |
