@@ -1,6 +1,38 @@
 # Functions List — Project Audit
 
-Generated: 2026-07-01
+Generated: 2026-07-01 | Updated: 2026-07-12
+
+---
+
+## 🟢 WBP_CharacterCreation (12 functions) — GB-019 COMPLETE
+
+| Function | Nodes | Resp | Verdict |
+|----------|-------|------|---------|
+| `UpdateNavigation` | ~15 | 1 | ✅ Prev/Next button visibility |
+| `ValidateRollStats` | ~15 | 1 | ✅ All 6 stats must be rolled |
+| `SelectRace` | ~10 | 1 | ✅ Highlight logic |
+| `SelectClass` | ~10 | 1 | ✅ Highlight logic |
+| `SelectAlignment` | ~10 | 1 | ✅ Highlight logic |
+| `GenerateRandomName` | ~12 | 1 | ✅ Syllable-based name gen |
+| `GetRaceDisplayName` | ~8 | 1 | ✅ Pure enum-to-text |
+| `GetClassDisplayName` | ~10 | 1 | ✅ Pure enum-to-text |
+| `GetAlignmentDisplayName` | ~8 | 1 | ✅ Pure enum-to-text |
+| `Initialise` | ~5 | 1 | ✅ Self-init from Event Construct |
+| `PopulateConfirmPanel` | ~20 | 1 | ✅ All summary TextBlocks |
+| `AssembleAndAddCharacter` | ~40 | 1 | ✅ DT lookup + HP + saves + struct + save |
+
+---
+
+## 🟡 WBP_CharacterScreen (6 functions) — GB-052 IN PROGRESS
+
+| Function | Nodes | Resp | Verdict |
+|----------|-------|------|---------|
+| `Initialise` | ~5 | 1 | ✅ Store PartyManagerRef |
+| `RefreshPartyList` | ~20 | 1 | ✅ Clear + ForEach → CreateWidget WBP_PartySlot |
+| `OnPartySlotClicked` | ~3 | 1 | ✅ Set SelectedIndex + RefreshCharacterDetails |
+| `OnTabClicked` | ~3 | 1 | ✅ SetActiveWidgetIndex |
+| **`RefreshCharacterDetails`** | **~80** | **1** | **✅ Stats/Saves/Equip populated. ComputeSavingThrows + DT_LevelProgression lookup + conditions** |
+| `GetEquipName` | ~5 | 1 | ✅ Placeholder — returns "None" for ID 0 |
 
 ---
 
@@ -10,7 +42,7 @@ Generated: 2026-07-01
 |----------|-------|------|---------|
 | `StartCombat` | ~30 | 1 | ✅ Orchestration chain |
 | `BuildInitiativeOrder` | ~20 | 1 | ✅ Rolls + updates combatants |
-| `SortInitiativeOrder` | ~25 | 1 |  ✅Selection sort |
+| `SortInitiativeOrder` | ~25 | 1 | ✅ Selection sort |
 | `BuildCombatants` | ~25 | 1 | ✅ Uses new AddCombatantToGrid helper |
 | `SpawnCombatantMarkers` | ~15 | 1 | ✅ |
 | `TransitionToCombat` | ~20 | 1 | ✅ Camera + input + pawn |
@@ -50,123 +82,39 @@ Generated: 2026-07-01
 
 | Function | Nodes | Resp | Verdict |
 |----------|-------|------|---------|
-| `RunEnemyTurn` | ~20 | 1 | ✅ (refactored!) |
-| `ExecuteEnemyAttack` | ~40 | 2 | ⚠️ Attack resolve + auto-hit check + distance check + rogue ambush + message |
-| `ChooseAction` | ~18 | 1 | ✅ |
-| `FindNearestPartyMember` | ~25 | 1 | ✅ Manhattan distance |
-| `MoveOneStepToward` | ~25 | 1 | ✅ |
-| `FindPathBFS` | ~45 | 1 | ✅ Complex algorithm, single concern |
-| `CheckAOEOpportunity` | ~25 | 1 | ✅ |
-| `GetFleeingEdgeTile` | ~15 | 1 | ✅ |
-| `SkipCurrentTurn` | ~5 | 1 | ✅ (new) |
-| `ExecuteFleeMovement` | ~20 | 1 | ✅ (new) |
-| `MoveToNearestPartyMember` | ~25 | 1 | ✅ (new) |
-| `ExecuteMeleeAttack` | ~8 | 1 | ✅ (new) |
+| `RunEnemyTurn` | ~20 | 1 | ✅ Dispatch via ChooseAction |
+| `ChooseAction` | ~15 | 1 | ✅ MoveToTarget/MeleeAttack/CastSpell/Flee/SkipTurn |
+| `MoveToTarget` | ~25 | 1 | ✅ BFS pathfinding + step execute |
+| `MeleeAttack` | ~20 | 1 | ✅ Attack resolution chain |
+| `CastSpell` | ~5 | 1 | ⚠️ PrintString stub |
+| `Flee` | ~20 | 1 | ✅ Morale-based flee to edge |
+| `SkipTurn` | ~3 | 1 | ✅ |
+| `CastAOESpell` | ~5 | 1 | ⚠️ PrintString stub |
+| `FindNearestPlayer` | ~12 | 1 | ✅ |
+| `FindPathBFS` | ~30 | 1 | ✅ With adjacency+occupancy |
+| `GetAdjacentTiles` | ~10 | 1 | ✅ Fixed DX/DY swap |
+| `GetFleeTarget` | ~15 | 1 | ✅ Edge tile search |
+| `GetAttacksThisRound` | ~8 | 1 | ✅ |
 
 ---
 
-## 🟢 BP_GameManager (11 functions)
+## 🟣 BP_PartyManager (11 functions) — Updated
 
 | Function | Nodes | Resp | Verdict |
 |----------|-------|------|---------|
-| `ChangeGameState` | ~5 | 1 | ✅ |
-| `SetStoryFlag` | ~5 | 1 | ✅ |
-| `CheckStoryFlag` | ~5 | 1 | ✅ |
-| `LoadDungeonLevel` | ~15 | 1 | ✅ Orchestration |
-| `StartCombat` | ~2 | 1 | ✅ Stub |
-| `EndCombat` | ~2 | 1 | ✅ Stub |
-| `AwardXP` | ~5 | 1 | ✅ |
-| `InitialiseGameState` | ~2 | 1 | ✅ |
-| `SpawnManagers` | ~30 | 1 | ✅ Spawning chain |
-| `InitialiseParty` | ~3 | 1 | ✅ |
-| `InitialiseWorld` | ~10 | 1 | ✅ |
+| `AddCharacter` | ~5 | 1 | ✅ |
+| `GetLivingMembers` | ~8 | 1 | ✅ |
+| `IsPartyWiped` | ~5 | 1 | ✅ |
+| `GetActiveSpeaker` | ~5 | 1 | ✅ |
+| `ReorderParty` | ~5 | 1 | ✅ |
+| `AwardXPToParty` | ~10 | 1 | ✅ |
+| `InitialiseTestParty` | ~20 | 1 | ✅ Hardcoded 4-party creation |
+| `AddXPToCharacter` | ~8 | 1 | ✅ |
+| `ApplyDeathToCharacter` | ~5 | 1 | ✅ |
+| `UpdateCharacterHP` | ~5 | 1 | ✅ |
+| **`LoadSavedParty`** | **~15** | **1** | **✅ NEW — Checks save exists, ForEach adds to PartyMembers** |
+| **`SavePartyToDisk`** | **~15** | **1** | **✅ NEW — Appends last member to existing save or creates new** |
 
 ---
 
-## 🟢 BP_DungeonGenerator (12 functions)
-
-| Function | Nodes | Resp | Verdict |
-|----------|-------|------|---------|
-| `GenerateDungeon` | ~8 | 1 | ✅ For Loop → ProcessRow |
-| `ProcessRow` | ~8 | 1 | ✅ For Loop → ProcessTile |
-| `ProcessTile` | ~10 | 1 | ✅ GetTile → spawn branches |
-| `SpawnTileWalls` | ~6 | 1 | ✅ |
-| `SpawnNorthWall` | ~5 | 1 | ✅ |
-| `SpawnEastWall` | ~5 | 1 | ✅ |
-| `SpawnSouthWall` | ~5 | 1 | ✅ |
-| `SpawnWestWall` | ~5 | 1 | ✅ |
-| `SpawnFloorAndCeiling` | ~6 | 1 | ✅ |
-| `AddFloorInstance` | ~5 | 1 | ✅ |
-| `AddCeilingInstance` | ~5 | 1 | ✅ |
-| `TileToWorldLocation` | ~5 | 1 | ✅ |
-
----
-
-## 🟢 BP_MapManager (11 functions)
-
-| Function | Nodes | Resp | Verdict |
-|----------|-------|------|---------|
-| `GenerateTestMap` | ~20 | 1 | ✅ AddTileToMap chain |
-| `AddTileToMap` | ~8 | 1 | ✅ |
-| `LoadMap` | ~10 | 1 | ✅ |
-| `GetTile` | ~8 | 1 | ✅ |
-| `CheckWall` | ~5 | 1 | ✅ |
-| `CheckDoor` | ~5 | 1 | ✅ |
-| `UpdatePlayerPosition` | ~5 | 1 | ✅ |
-| `GetExitTile` | ~5 | 1 | ✅ |
-| `IncrementStepCounter` | ~5 | 1 | ✅ |
-| `HandleLevelTransition` | ~8 | 1 | ✅ |
-| `FillMapWithEmptyTiles` | ~5 | 1 | ✅ |
-
----
-
-## 🟢 BP_CombatGrid (21 functions)
-
-All grid utility functions — single responsibility, ≤10 nodes each. ✅
-
----
-
-## 🟢 BP_CombatantMarker (2 functions)
-
-| Function | Nodes | Resp | Verdict |
-|----------|-------|------|---------|
-| `Initialise` | ~15 | 1 | ✅ Config visual based on type |
-| `Construction Script` | — | 1 | ✅ |
-
----
-
-## 🟢 BP_ExplorerPawn (7 functions)
-
-All movement/utility functions — single responsibility, ≤10 nodes each. ✅
-
----
-
-## 🟢 Manager Blueprints
-
-| BP | Functions | Verdict |
-|----|-----------|---------|
-| BP_PartyManager | 9 | ✅ All single responsibility |
-| BP_TextManager | 2 | ✅ |
-| BP_XPManager | 4 | ✅ |
-| BP_EncounterManager | 4 | ✅ |
-| BP_EventManager | 2 | ✅ |
-
----
-
-## 🟢 BPL_RulesLibrary (22 functions)
-
-Pure function library — all single responsibility. ✅
-
----
-
-## Summary
-
-| Priority | Function | BP | Issues |
-|----------|----------|-----|--------|
-| 🔴 | `OnActionComplete` | BP_CombatManager | 5 responsibilities in ~40 nodes |
-| 🟡 | `ExecutePlayerAttack` | BP_CombatManager | 3-branch duplicate message chain |
-| 🟡 | `EndCombat` | BP_CombatManager | Victory vs Defeat paths intertwined |
-| 🟡 | `ExecuteEnemyAttack` | BP_EnemyAI | Attack + auto-hit + distance + rogue + message |
-| ⚠️ | `ExecuteCombatantMove` | BP_CombatManager | Move logic + marker sync |
-
-**116 total functions across 14 BPs. 18 functions had issues, 6 are multi-responsibility, 2 already refactored.**
+*Updated: 2026-07-12 — Added WBP_CharacterCreation (12 functions), WBP_CharacterScreen (6 functions), new BP_PartyManager save/load functions*
