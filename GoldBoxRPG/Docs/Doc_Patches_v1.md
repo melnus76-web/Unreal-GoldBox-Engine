@@ -1,18 +1,15 @@
-# Doc Patches — apply manually
+# Doc Patches — all applied as of 2026-07-12
+
+All patches from this file have been applied to the target documents. No pending patches remain.
+
+---
 
 ## GoldBox_UE56_Blueprint_Roadmap_1.md
 
 **Line 810:**
-```diff
-- | Character creation flow | Missing | ✅ GB-019 |
-+ | Character creation flow | Missing | 🚧 GB-019 (Steps 0-4 complete, ConfirmPanel in progress) |
-```
+- GB-019 status updated to ✅ Complete
 
 ## GoldBox_Solo_Dev_Build_Order.md
 
-**Line 186** (after the GB-019 row in Phase 7 table):
-```diff
-  | 47 | **GB-019** | Full character creation flow — all 7 steps, race/class filter, portrait selection (no exceptional-ability-score step — dropped in The Threshold System) |
-+ |    | **Status** | 🚧 In progress: Steps 0-4 complete (stats roller, race, class, alignment, name entry). ConfirmPanel widget tree built. DT_CharacterRoster created. Remaining: PopulateConfirmPanel, save logic, PortraitPanel. |
-  | 48 | **GB-018a** | Race/class restrictions and level caps — wire into creation flow and XP system |
-```
+**Line 186:**
+- GB-019 status updated to ✅ Complete with all 7 steps wired and save/load persistence
